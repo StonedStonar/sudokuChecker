@@ -4,17 +4,23 @@ package no.ntnu.OS.sudokuApp;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class SudokuError {
-
-    private int listID;
-
-    private int columnID;
+public class ThreadMethods {
 
     /**
-      * Makes an instance of the SudokuError class.
+      * Makes an instance of the ThreadMethods class.
       */
-    public SudokuError(int listID, int columnID){
+    public ThreadMethods(){
     
+    }
+
+    public static void main(String[] args) {
+        SudokuBoard sudoBoard = new SudokuBoard(9);
+        int size = sudoBoard.getSize();
+        for (int i = 1; size >= i; i++) {
+            sudoBoard.getRowIterator(i); {
+
+            }
+        }
     }
     
     /**
