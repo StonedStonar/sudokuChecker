@@ -12,28 +12,38 @@ public class SudokuBoard {
 
     private Map<Integer, Row> rowMap;
 
-    private int size;
+    private final int size;
 
     /**
      * Makes an instance of the SudokuBoard.
      * @param size the size this map should have. This is in the Y direction.
      */
     public SudokuBoard(int size){
-        checkIfNumberIsAboveZero(size, "size");
+        checkSize(size);
         rowMap = new HashMap<>();
         this.size = size;
         addAllRows(size);
     }
 
-    public SudokuBoard(String sudokuSolution){
+    /**
+     * Makes a SudokuBoard with the solution as a string.
+     * @param sudokuSolution the solution to check.
+     */
+    public SudokuBoard(String sudokuSolution, int size){
         checkString(sudokuSolution, "sudoku solution");
+        checkSize(size);
         rowMap = new HashMap<>();
-        addAllRows(9);
+        this.size = size;
+        addAllRows(size);
         parseFromStringAndAdd(sudokuSolution);
     }
 
+    /**
+     * A basic method that shows that the SudokuBoard gets set up properly.
+     * @param args don't have a clue m8.
+     */
     public static void main(String[] args) {
-        SudokuBoard sudokuBoard = new SudokuBoard("864371259325849761971265843436192587198657432257483916689734125713528694542916378");
+        SudokuBoard sudokuBoard = new SudokuBoard("864371259325849761971265843436192587198657432257483916689734125713528694542916378", 9);
         sudokuBoard.printAllRows();
     }
 
@@ -91,6 +101,14 @@ public class SudokuBoard {
             Row row = new Row(size);
             addRow(row, i);
         }
+    }
+
+    /**
+     * Checks if the input size is above zero.
+     * @param size the size to check.
+     */
+    private void checkSize(int size){
+        checkIfNumberIsAboveZero(size, "size");
     }
 
     /**

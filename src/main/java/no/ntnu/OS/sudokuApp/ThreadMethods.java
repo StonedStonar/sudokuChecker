@@ -1,4 +1,7 @@
 package no.ntnu.OS.sudokuApp;
+
+import java.util.Iterator;
+
 /**
  *
  * @version 0.1
@@ -14,12 +17,11 @@ public class ThreadMethods {
     }
 
     public static void main(String[] args) {
-        SudokuBoard sudoBoard = new SudokuBoard(9);
+        SudokuBoard sudoBoard = new SudokuBoard("864371259325849761971265843436192587198657432257483916689734125713528694542916378", 9);
         int size = sudoBoard.getSize();
         for (int i = 1; size >= i; i++) {
-            sudoBoard.getRowIterator(i); {
-
-            }
+            //The list that we are going through.
+            Iterator<Integer> row = sudoBoard.getRowIterator(i);
         }
     }
     

@@ -1,16 +1,16 @@
 package no.ntnu.OS.sudokuApp;
 /**
- *
+ * Represents a basic object that can hold a SudokuNumber's position and value.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
 public class SudokuNumber {
 
-    private int listID;
+    private final int listID;
 
-    private int columnID;
+    private final int columnID;
     
-    private int number;
+    private final int number;
 
     /**
      * Makes a basic instance of the SudokuNumber
@@ -28,24 +28,24 @@ public class SudokuNumber {
     }
 
     /**
-     * 
-     * @return
+     * Gets the listID of the SudokuNumber
+     * @return ID of the list.
      */
     public int getListID() {
         return listID;
     }
 
     /**
-     * 
-     * @return
+     * Gets the columnID this object is in.
+     * @return the column ID.
      */
     public int getColumnID() {
         return columnID;
     }
 
     /**
-     * 
-     * @return
+     * Gets the sudoku number that is in that cell.
+     * @return the sudoku number.
      */
     public int getNumber() {
         return number;

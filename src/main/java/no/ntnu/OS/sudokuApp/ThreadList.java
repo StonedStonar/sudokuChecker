@@ -5,13 +5,14 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- *
+ * Represents an object that holds each cell we are going through.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
 public class ThreadList {
 
     private List<SudokuNumber> sudokuNumberList;
+
     /**
       * Makes an instance of the ThreadList class.
       */
