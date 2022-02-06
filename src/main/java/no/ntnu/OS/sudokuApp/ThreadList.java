@@ -3,6 +3,7 @@ package no.ntnu.OS.sudokuApp;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents an object that holds each cell we are going through.
@@ -25,7 +26,7 @@ public class ThreadList {
      * @param sudokuNumber add number to list.
      */
     public void addSudokuNumber(SudokuNumber sudokuNumber){
-        checkIfObjectIsNull(sudokuNumber, "Sudoku number");
+        checkIfSudokuNumberIsValid(sudokuNumber);
         sudokuNumberList.add(sudokuNumber);
     }
 
@@ -55,6 +56,54 @@ public class ThreadList {
         //How it can be done.
         //sudokuNumberList.stream().anyMatch(sudnum -> sudnum.getNumber() == number);
         return success;
+    }
+
+    /**
+     * Checks if the input sudoku number has the same exact position as one in the list.
+     * @param sudokuNumber the sudoku number to check.
+     * @return <code>true</code> if a sudoku number in this list matches the input's position and value.
+     *         <code>false</code> if a sudoku number in this list does not match completely.
+     */
+    public boolean containsSudokuNumber(SudokuNumber sudokuNumber){
+        checkIfSudokuNumberIsValid(sudokuNumber);
+        boolean valid = sudokuNumberList.stream().anyMatch(num -> num.checkIfPositionIsSame(sudokuNumber));
+        return valid;
+    }
+
+    /**
+     * Prints all the elements in this thread list.
+     */
+    public void printAllElements(){
+        sudokuNumberList.forEach(number -> System.out.print(number.getNumber() + " "));
+        System.out.println();
+    }
+
+    /**
+     * Gets the occurrence of this number in this row.
+     * @param firstNumber the first number you want to get.
+     * @return the sudokunumber object that represents this number and its position.
+     */
+    public SudokuNumber getFirstOfNumber(int firstNumber){
+        checkIfNumberIsAboveZero(firstNumber, "first number");
+        Optional<SudokuNumber> opSud = sudokuNumberList.stream().filter(sudnum -> sudnum.getNumber() == firstNumber).findFirst();
+        //Todo: Endre denne slik at den kan kaste exceptions.
+        return opSud.get();
+    }
+
+    /**
+     * Gets all the sudoku numbers.
+     * @return all the sudoku numbers.
+     */
+    public List<SudokuNumber> getAllSudokuNumbers(){
+        return this.sudokuNumberList;
+    }
+
+    /**
+     * Checks if the sudoku number is valid.
+     * @param sudokuNumber the number to check.
+     */
+    private void checkIfSudokuNumberIsValid(SudokuNumber sudokuNumber){
+        checkIfObjectIsNull(sudokuNumber, "Sudoku number");
     }
 
 

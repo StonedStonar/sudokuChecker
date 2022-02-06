@@ -71,9 +71,9 @@ public class SudokuBoard {
     private void parseFromStringAndAdd(String sudokuSolution){
         List<Integer> numbers = parseNumbersFromStringToList(sudokuSolution);
         int numberToAdd = 0;
-        for (int i = 1; i <= 9; i++){
+        for (int i = 1; i <= size; i++){
             Row row = rowMap.get(i);
-            for (int j = 0; j < 9; j++){
+            for (int j = 0; j < size; j++){
                 row.addNumber(numbers.get(numberToAdd));
                 numberToAdd++;
             }

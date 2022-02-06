@@ -1,6 +1,8 @@
 package no.ntnu.OS.sudokuApp;
 
-import java.util.Iterator;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -16,14 +18,48 @@ public class ThreadMethods {
     
     }
 
-    public static void main(String[] args) {
-        SudokuBoard sudoBoard = new SudokuBoard("864371259325849761971265843436192587198657432257483916689734125713528694542916378", 9);
-        int size = sudoBoard.getSize();
-        for (int i = 1; size >= i; i++) {
-            //The list that we are going through.
-            Iterator<Integer> row = sudoBoard.getRowIterator(i);
+    public static void main(String[] args){
+        SudokuBoard sudokuBoard = new SudokuBoard("364371259325849761971265843436192587198657432257483916689734125713528694542916378", 9);
+        test(sudokuBoard);
+
+
+
+    }
+
+    private static void frræ(SudokuBoard sudokuBoard){
+        SudokuCheckThread sudokuCheckThread = new SudokuCheckThread(sudokuBoard,false, false);
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        Future<List<SudokuNumber>> futureList = executorService.submit(sudokuCheckThread);
+    }
+
+    private static void test(SudokuBoard sudokuBoard){
+        SudokuCheckThread sudokuCheckThread = new SudokuCheckThread(sudokuBoard,false, false);
+        SudokuCheckThread sudokuCheckThread1 = new SudokuCheckThread(sudokuBoard, true, false);
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        Future<List<SudokuNumber>> futureList = executorService.submit(sudokuCheckThread);
+        Future<List<SudokuNumber>> futureList2 = executorService.submit(sudokuCheckThread1);
+        try {
+            List<SudokuNumber> sudokuNumberList = futureList.get();
+            List<SudokuNumber> sudList = futureList2.get();
+            System.out.println("Amount of faults: " + sudokuNumberList.size());
+            System.out.println("Amount of faults " + sudList.size());
+            System.out.println("Amount of fautls after code " + "s");
+            ThreadList threadList = new ThreadList();
+            sudokuNumberList.forEach(num -> sudList.forEach(num2 -> {
+                if (num2.checkIfPositionIsSame(num) && !threadList.containsSudokuNumber(num2)){
+                    threadList.addSudokuNumber(num2);
+                }
+            }));
+            threadList.getAllSudokuNumbers().forEach(test -> System.out.println(test.getListID() + " " + test.getColumnID() + " " + test.getNumber()));
+            System.out.println("Same numbers :" + threadList.getAllSudokuNumbers().size());
+
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
+
     
     /**
      * Checks if a string is of a valid format or not.

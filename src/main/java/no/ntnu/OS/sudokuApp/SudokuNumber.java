@@ -52,6 +52,18 @@ public class SudokuNumber {
     }
 
     /**
+     * Checks if the position of two sudoku number matches and the number.
+     * @param sudokuNumber the sudoku number to compare against.
+     * @return <code>true</code> if the object and the input is at the same spot.
+     *         <code>false</code> if the object and input is not at the same spot.
+     */
+    public boolean checkIfPositionIsSame(SudokuNumber sudokuNumber){
+        checkIfObjectIsNull(sudokuNumber, "sudoku number");
+        boolean valid = sudokuNumber.getColumnID() == this.columnID && sudokuNumber.getListID() == this.listID && sudokuNumber.getNumber() == this.number;
+        return valid;
+    }
+
+    /**
      * Checks if the number is above zero.
      * @param numberToCheck the number to check.
      * @param prefix the error that the exception should have.
@@ -61,6 +73,7 @@ public class SudokuNumber {
             throw new IllegalArgumentException("The " + prefix + " must be above 0.");
         }
     }
+
 
     /**
      * Checks if a string is of a valid format or not.
