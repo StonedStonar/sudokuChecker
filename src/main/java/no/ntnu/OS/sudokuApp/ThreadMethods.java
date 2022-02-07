@@ -19,35 +19,41 @@ public class ThreadMethods {
     }
 
     public static void main(String[] args){
-        SudokuBoard sudokuBoard = new SudokuBoard("364371259325849761971265843436192587198657432257483916689734125713528694542916378", 9);
+        SudokuBoard sudokuBoard = new SudokuBoard("346179258187523964529648371965832417472916835813754629798261543631485792254397186", 9);
         test(sudokuBoard);
 
 
 
     }
 
-    private static void frræ(SudokuBoard sudokuBoard){
-        SudokuCheckThread sudokuCheckThread = new SudokuCheckThread(sudokuBoard,false, false);
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
-        Future<List<SudokuNumber>> futureList = executorService.submit(sudokuCheckThread);
-    }
-
+    /**
+     * Represents a basic method to calculate
+     * @param sudokuBoard
+     */
     private static void test(SudokuBoard sudokuBoard){
-        SudokuCheckThread sudokuCheckThread = new SudokuCheckThread(sudokuBoard,false, false);
-        SudokuCheckThread sudokuCheckThread1 = new SudokuCheckThread(sudokuBoard, true, false);
+        SudokuCheckThread cellCheckThread = new SudokuCheckThread(sudokuBoard,false, false);
+        SudokuCheckThread columnCheckThread = new SudokuCheckThread(sudokuBoard, true, false);
+        SudokuCheckThread rowCheckThread = new SudokuCheckThread(sudokuBoard,false, true);
+
         ExecutorService executorService = Executors.newFixedThreadPool(3);
-        Future<List<SudokuNumber>> futureList = executorService.submit(sudokuCheckThread);
-        Future<List<SudokuNumber>> futureList2 = executorService.submit(sudokuCheckThread1);
+        Future<List<SudokuNumber>> futureCell = executorService.submit(cellCheckThread);
+        Future<List<SudokuNumber>> futureColumn = executorService.submit(columnCheckThread);
+        Future<List<SudokuNumber>> futureRow = executorService.submit(rowCheckThread);
         try {
-            List<SudokuNumber> sudokuNumberList = futureList.get();
-            List<SudokuNumber> sudList = futureList2.get();
-            System.out.println("Amount of faults: " + sudokuNumberList.size());
-            System.out.println("Amount of faults " + sudList.size());
-            System.out.println("Amount of fautls after code " + "s");
+            List<SudokuNumber> cellDuplicates = futureCell.get();
+            List<SudokuNumber> columnDuplicates = futureColumn.get();
+            List<SudokuNumber> rowDuplicates = futureRow.get();
+            System.out.println("Amount of faults: " + cellDuplicates.size());
+            System.out.println("Amount of faults " + columnDuplicates.size());
+            System.out.println("Amount of faults after code " + "s");
             ThreadList threadList = new ThreadList();
-            sudokuNumberList.forEach(num -> sudList.forEach(num2 -> {
-                if (num2.checkIfPositionIsSame(num) && !threadList.containsSudokuNumber(num2)){
-                    threadList.addSudokuNumber(num2);
+            cellDuplicates.forEach(errorNumber -> columnDuplicates.forEach(secondErrorNumber -> {
+                if (secondErrorNumber.checkIfPositionIsSame(errorNumber) && !threadList.containsSudokuNumber(secondErrorNumber)){
+                    rowDuplicates.forEach(thirdErrorNumber -> {
+                        if (secondErrorNumber.checkIfPositionIsSame(thirdErrorNumber)){
+                            threadList.addSudokuNumber(thirdErrorNumber);
+                        }
+                    });
                 }
             }));
             threadList.getAllSudokuNumbers().forEach(test -> System.out.println(test.getListID() + " " + test.getColumnID() + " " + test.getNumber()));

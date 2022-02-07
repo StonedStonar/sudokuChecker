@@ -39,15 +39,6 @@ public class SudokuBoard {
     }
 
     /**
-     * A basic method that shows that the SudokuBoard gets set up properly.
-     * @param args don't have a clue m8.
-     */
-    public static void main(String[] args) {
-        SudokuBoard sudokuBoard = new SudokuBoard("864371259325849761971265843436192587198657432257483916689734125713528694542916378", 9);
-        sudokuBoard.printAllRows();
-    }
-
-    /**
      * Prints all the rows in a "grid" fashion that can be used for testing and visualsation.
      */
     public void printAllRows(){
