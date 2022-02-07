@@ -1,4 +1,4 @@
-package no.ntnu.OS.sudokuApp;
+package no.ntnu.OS.sudokuApp.model;
 /**
  * Represents a basic object that can hold a SudokuNumber's position and value.
  * @version 0.1

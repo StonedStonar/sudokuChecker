@@ -1,4 +1,4 @@
-package no.ntnu.OS.sudokuApp;
+package no.ntnu.OS.sudokuApp.model;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -69,9 +69,14 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
         }
         threadListMap.values().forEach(ThreadList::printAllElements);
         System.out.println("Row check results: " + duplicateNumbers.size());
-        duplicateNumbers.forEach(number -> System.out.println(number.getNumber()));
+        duplicateNumbers.forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
 
         return duplicateNumbers;
+    }
+
+    public static void main(String[] args) {
+        SudokuCheckThread sudokuCheckThread = new SudokuCheckThread(new SudokuBoard("1212"), false, false);
+        sudokuCheckThread.checkColumns();
     }
 
     /**
@@ -81,47 +86,46 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
     private List<SudokuNumber> checkCells(){
         int size = sudokuBoard.getSize();
         List<SudokuNumber> duplicateNumbers = new ArrayList<>();
-        Map<Integer, ThreadList> threadListMap = makeThreadListMapWithLists();
+        if (size >= 4){
+            Map<Integer, ThreadList> threadListMap = makeThreadListMapWithLists();
 
-        //Dimensjonen på brettet
-        int dimensions = (int) Math.round(Math.sqrt(size));
+            int dimensions = (int) Math.round(Math.sqrt(size));
+            //Dimensjonen på brettet
 
-        System.out.println("Dimensions : " + dimensions);
+            System.out.println("Dimensions : " + dimensions);
 
-        //Skaffer alle iteratorene og legger dem i et map.
+            //Skaffer alle iteratorene og legger dem i et map.
+            int cellCount = 1;
 
-
-
-        int cellCount = 1;
-
-        for (int i = 1; i <= size; i++){
-            Iterator<Integer> it = sudokuBoard.getRowIterator(i);
-            int p = 1;
-            int nextList = cellCount;
-            ThreadList threadList = null;
-            //Map used to find the first of a duplicate. Since we can have many duplicates we need more than one
-            while (it.hasNext()){
-                threadList = threadListMap.get(nextList);
-                int number = it.next();
-                SudokuNumber sudokuNumber = new SudokuNumber(i, p, number);
-                if (threadList.contains(number)){
-                    duplicateNumbers.add(sudokuNumber);
-                    checkAndAddFirstNumberIfNotInThreadList(number, threadList, duplicateNumbers);
+            for (int i = 1; i <= size; i++){
+                Iterator<Integer> it = sudokuBoard.getRowIterator(i);
+                int p = 1;
+                int nextList = cellCount;
+                ThreadList threadList = null;
+                //Map used to find the first of a duplicate. Since we can have many duplicates we need more than one
+                while (it.hasNext()){
+                    threadList = threadListMap.get(nextList);
+                    int number = it.next();
+                    SudokuNumber sudokuNumber = new SudokuNumber(i, p, number);
+                    if (threadList.contains(number)){
+                        duplicateNumbers.add(sudokuNumber);
+                        checkAndAddFirstNumberIfNotInThreadList(number, threadList, duplicateNumbers);
+                    }
+                    threadList.addSudokuNumber(sudokuNumber);
+                    if (p % dimensions == 0){
+                        nextList++;
+                    }
+                    p++;
                 }
-                threadList.addSudokuNumber(sudokuNumber);
-                if (p % dimensions == 0){
-                    nextList++;
+                if (i % dimensions == 0){
+                    cellCount = cellCount + dimensions;
                 }
-                p++;
             }
-            if (i % dimensions == 0){
-                cellCount = cellCount + dimensions;
-            }
+
+            threadListMap.values().forEach(ThreadList::printAllElements);
+            System.out.println("Cell check results: ");
+            duplicateNumbers.forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
         }
-
-        threadListMap.values().forEach(ThreadList::printAllElements);
-        System.out.println("Cell check results: ");
-        duplicateNumbers.forEach(number -> System.out.println(number.getNumber()));
         return duplicateNumbers;
     }
 
@@ -131,7 +135,7 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
      */
     private Map<Integer, ThreadList> makeThreadListMapWithLists(){
         Map<Integer, ThreadList> threadListMap = new HashMap<>();
-        for (int i = sudokuBoard.getSize(); i > 0; i--){
+        for (int i = 1; i <= sudokuBoard.getSize(); i++){
             threadListMap.put(i, new ThreadList());
         }
         return threadListMap;
@@ -157,11 +161,7 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
     public List<SudokuNumber> checkColumns(){
         int size = sudokuBoard.getSize();
         List<SudokuNumber> duplicateNumbers = new ArrayList<>();
-        Map<Integer, ThreadList> threadListMap = new HashMap<>();
-
-        for (int i = size; i > 0; i--){
-            threadListMap.put(i, new ThreadList());
-        }
+        Map<Integer, ThreadList> threadListMap = makeThreadListMapWithLists();
 
         for (int i = size; i > 0; i--){
             Iterator<Integer> it = sudokuBoard.getRowIterator(i);
@@ -180,7 +180,7 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
         }
         System.out.println("Column check: ");
         threadListMap.values().forEach(ThreadList::printAllElements);
-        duplicateNumbers.forEach(number -> System.out.println(number.getNumber()));
+        duplicateNumbers.forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
         return duplicateNumbers;
     }
     

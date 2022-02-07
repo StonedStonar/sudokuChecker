@@ -1,6 +1,10 @@
-package no.ntnu.OS.sudokuApp;
+package no.ntnu.OS.sudokuApp.model;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -29,11 +33,10 @@ public class SudokuBoard {
      * Makes a SudokuBoard with the solution as a string.
      * @param sudokuSolution the solution to check.
      */
-    public SudokuBoard(String sudokuSolution, int size){
+    public SudokuBoard(String sudokuSolution){
         checkString(sudokuSolution, "sudoku solution");
-        checkSize(size);
+        this.size = getDimensions(sudokuSolution);
         rowMap = new HashMap<>();
-        this.size = size;
         addAllRows(size);
         parseFromStringAndAdd(sudokuSolution);
     }
@@ -129,6 +132,67 @@ public class SudokuBoard {
         return rowMap.size();
     }
 
+    /**
+     * Gets the dimensions of a string to check if its whole.
+     * @param string the string to check for a nxn matrix.
+     * @return the dimensions of this string. If string is 81 letters then it returns 9.
+     * @throws NumberFormatException if the number is not an even square number.
+     */
+    private int getDimensions(String string){
+        double dimensions = Math.sqrt(string.length());
+        if (dimensions == (int) dimensions){
+            return (int) dimensions;
+        }else {
+            throw new NumberFormatException("The input number must be a n x n matrix.");
+        }
+    }
+
+    /**
+     *
+     */
+    public List<SudokuNumber> checkPuzzleIsValid(ExecutorService executorService){
+        ThreadList threadList = new ThreadList();
+
+        SudokuCheckThread cellCheckThread = new SudokuCheckThread(this,false, false);
+        SudokuCheckThread columnCheckThread = new SudokuCheckThread(this, true, false);
+        SudokuCheckThread rowCheckThread = new SudokuCheckThread(this,false, true);
+
+        Future<List<SudokuNumber>> futureCell = executorService.submit(cellCheckThread);
+        Future<List<SudokuNumber>> futureColumn = executorService.submit(columnCheckThread);
+        Future<List<SudokuNumber>> futureRow = executorService.submit(rowCheckThread);
+        try {
+            List<SudokuNumber> cellDuplicates = futureCell.get();
+            List<SudokuNumber> columnDuplicates = futureColumn.get();
+            List<SudokuNumber> rowDuplicates = futureRow.get();
+            System.out.println("Amount of faults: " + cellDuplicates.size());
+            System.out.println("Amount of faults " + columnDuplicates.size());
+            System.out.println("Amount of faults after code " + "s");
+            if (size < 4){
+                columnDuplicates.forEach(errorNumber -> rowDuplicates.forEach(secondErrorNumber -> {
+                    if (secondErrorNumber.checkIfPositionIsSame(errorNumber) && !threadList.containsSudokuNumber(errorNumber)){
+                        threadList.addSudokuNumber(errorNumber);
+                    }
+                }));
+            }else {
+                cellDuplicates.forEach(errorNumber -> columnDuplicates.forEach(secondErrorNumber -> {
+                    if (secondErrorNumber.checkIfPositionIsSame(errorNumber) && !threadList.containsSudokuNumber(secondErrorNumber)){
+                        rowDuplicates.forEach(thirdErrorNumber -> {
+                            if (secondErrorNumber.checkIfPositionIsSame(thirdErrorNumber)){
+                                threadList.addSudokuNumber(thirdErrorNumber);
+                            }
+                        });
+                    }
+                }));
+            }
+            threadList.getAllSudokuNumbers().forEach(test -> System.out.println(test.getListID() + " " + test.getColumnID() + " " + test.getNumber()));
+            System.out.println("Same numbers :" + threadList.getAllSudokuNumbers().size());
+
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return threadList.getAllSudokuNumbers();
+    }
 
     /**
      * Checks if the row id is above zero.

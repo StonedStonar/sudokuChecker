@@ -1,4 +1,4 @@
-package no.ntnu.OS.sudokuApp;
+package no.ntnu.OS.sudokuApp.model;
 
 import java.util.ArrayList;
 import java.util.Iterator;
