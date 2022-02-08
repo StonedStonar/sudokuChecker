@@ -8,7 +8,7 @@ import java.util.concurrent.Callable;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
+public class SudokuCheckThread implements Callable<ThreadList> {
 
     private final SudokuBoard sudokuBoard;
 
@@ -32,24 +32,24 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
     }
 
     @Override
-    public List<SudokuNumber> call() throws Exception {
-        List<SudokuNumber> sudokuNumberList = null;
+    public ThreadList call() throws Exception {
+        ThreadList threadList = null;
         if (!checkColumn && !checkRow){
-            sudokuNumberList = checkCells();
+            threadList = checkCells();
         }else if (checkColumn){
-            sudokuNumberList = checkColumns();
+            threadList = checkColumns();
         }else {
-            sudokuNumberList = checkRow();
+            threadList = checkRow();
         }
-        return sudokuNumberList;
+        return threadList;
     }
 
     /**
      * Checks the row of the puzzle and returns a list with duplicate numbers.
      * @return a list with duplicate numbers.
      */
-    private List<SudokuNumber> checkRow() {
-        List<SudokuNumber> duplicateNumbers = new ArrayList<>();
+    private ThreadList checkRow() {
+        ThreadList duplicateNumbers = new ThreadList();
         Map<Integer, ThreadList> threadListMap = makeThreadListMapWithLists();
         int size = sudokuBoard.getSize();
         for (int i = 1; i <= size; i++) {
@@ -60,7 +60,7 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
                 int nextNumber = it.next();
                 SudokuNumber sudokuNumber = new SudokuNumber(i, pos, nextNumber);
                 if (threadList.contains(nextNumber)) {
-                    duplicateNumbers.add(sudokuNumber);
+                    duplicateNumbers.addSudokuNumber(sudokuNumber);
                     checkAndAddFirstNumberIfNotInThreadList(nextNumber,threadList, duplicateNumbers);
                 }
                 threadList.addSudokuNumber(sudokuNumber);
@@ -68,8 +68,8 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
             }
         }
         threadListMap.values().forEach(ThreadList::printAllElements);
-        System.out.println("Row check results: " + duplicateNumbers.size());
-        duplicateNumbers.forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
+        System.out.println("Row check results: " + duplicateNumbers.getAllSudokuNumbers().size());
+        duplicateNumbers.getAllSudokuNumbers().forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
 
         return duplicateNumbers;
     }
@@ -83,14 +83,13 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
      * Checks each cell in an n x n matrix.
      * @return A list with all the sudoku numbers that are seen twice.
      */
-    private List<SudokuNumber> checkCells(){
+    private ThreadList checkCells(){
         int size = sudokuBoard.getSize();
-        List<SudokuNumber> duplicateNumbers = new ArrayList<>();
+        ThreadList duplicateNumbers = new ThreadList();
         if (size >= 4){
             Map<Integer, ThreadList> threadListMap = makeThreadListMapWithLists();
 
             int dimensions = (int) Math.round(Math.sqrt(size));
-            //Dimensjonen på brettet
 
             System.out.println("Dimensions : " + dimensions);
 
@@ -108,7 +107,7 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
                     int number = it.next();
                     SudokuNumber sudokuNumber = new SudokuNumber(i, p, number);
                     if (threadList.contains(number)){
-                        duplicateNumbers.add(sudokuNumber);
+                        duplicateNumbers.addSudokuNumber(sudokuNumber);
                         checkAndAddFirstNumberIfNotInThreadList(number, threadList, duplicateNumbers);
                     }
                     threadList.addSudokuNumber(sudokuNumber);
@@ -124,7 +123,7 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
 
             threadListMap.values().forEach(ThreadList::printAllElements);
             System.out.println("Cell check results: ");
-            duplicateNumbers.forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
+            duplicateNumbers.getAllSudokuNumbers().forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
         }
         return duplicateNumbers;
     }
@@ -145,22 +144,22 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
      * Checks and adds a new number to the thread list if duplicate is found.
      * @param number the number to check after.
      * @param threadList the thread list to add to.
-     * @param duplicateNumbers the list with duplicate numbers.
+     * @param duplicateNumbers the object with all the duplicate numbers.
      */
-    private void checkAndAddFirstNumberIfNotInThreadList(int number, ThreadList threadList, List<SudokuNumber> duplicateNumbers){
+    private void checkAndAddFirstNumberIfNotInThreadList(int number, ThreadList threadList, ThreadList duplicateNumbers){
         SudokuNumber firstNumber = threadList.getFirstOfNumber(number);
-        if (!duplicateNumbers.contains(firstNumber)){
-            duplicateNumbers.add(firstNumber);
+        if (!duplicateNumbers.containsSudokuNumber(firstNumber)){
+            duplicateNumbers.addSudokuNumber(firstNumber);
         }
     }
 
     /**
      * Checks if the columns are valid format. Supports n x n matrix.
-     * @return A list with all the sudoku numbers that are seen twice.
+     * @return A list with all the sudoku numbers that are seen more than once.
      */
-    public List<SudokuNumber> checkColumns(){
+    public ThreadList checkColumns(){
         int size = sudokuBoard.getSize();
-        List<SudokuNumber> duplicateNumbers = new ArrayList<>();
+        ThreadList duplicateNumbers = new ThreadList();
         Map<Integer, ThreadList> threadListMap = makeThreadListMapWithLists();
 
         for (int i = size; i > 0; i--){
@@ -171,7 +170,7 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
                 int number = it.next();
                 SudokuNumber sudokuNumber = new SudokuNumber(i, p, number);
                 if (threadList.contains(number)){
-                    duplicateNumbers.add(sudokuNumber);
+                    duplicateNumbers.addSudokuNumber(sudokuNumber);
                     checkAndAddFirstNumberIfNotInThreadList(number, threadList, duplicateNumbers);
                 }
                 threadList.addSudokuNumber(sudokuNumber);
@@ -180,7 +179,7 @@ public class SudokuCheckThread implements Callable<List<SudokuNumber>> {
         }
         System.out.println("Column check: ");
         threadListMap.values().forEach(ThreadList::printAllElements);
-        duplicateNumbers.forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
+        duplicateNumbers.getAllSudokuNumbers().forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
         return duplicateNumbers;
     }
     

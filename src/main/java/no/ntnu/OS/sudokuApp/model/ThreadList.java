@@ -12,7 +12,7 @@ import java.util.Optional;
  */
 public class ThreadList {
 
-    private List<SudokuNumber> sudokuNumberList;
+    private final List<SudokuNumber> sudokuNumberList;
 
     /**
       * Makes an instance of the ThreadList class.
@@ -68,6 +68,43 @@ public class ThreadList {
         checkIfSudokuNumberIsValid(sudokuNumber);
         boolean valid = sudokuNumberList.stream().anyMatch(num -> num.checkIfPositionIsSame(sudokuNumber));
         return valid;
+    }
+
+    /**
+     * Removes a sudoku number from the list.
+     * @param sudokuNumber the sudoku number to remove.
+     */
+    private void removeSudokuNumber(SudokuNumber sudokuNumber){
+        sudokuNumberList.remove(sudokuNumber);
+    }
+
+    /**
+     * Removes all the numbers that are on the same row and column as the input number if it's not above 1.
+     * @param sudokuNumber the sudoku number to remove and remove all copies of.
+     */
+    public void removeAllNumbersWithSameValueRowAndColumn(SudokuNumber sudokuNumber){
+        checkIfSudokuNumberIsValid(sudokuNumber);
+        removeSudokuNumber(sudokuNumber);
+        List<SudokuNumber> rowList = getAllNumbersWithRowOrColumn(sudokuNumber, false);
+        if (rowList.size() == 1){
+            sudokuNumberList.remove(rowList.get(0));
+        }
+        List<SudokuNumber> columnList = getAllNumbersWithRowOrColumn(sudokuNumber, true);
+        if (columnList.size() == 1){
+            sudokuNumberList.remove(columnList.get(0));
+        }
+    }
+
+    /**
+     * Gets all the number that is on the same row or column.
+     * @param sudokuNumber the sudoku number to search for.
+     * @param isColumn <code>true</code> if it's going to look for numbers on the same column.
+     *                 <code>false</code> if it's going to look for numbers on the same row.
+     * @return a list with all the numbers on the same row/column.
+     */
+    private List<SudokuNumber> getAllNumbersWithRowOrColumn(SudokuNumber sudokuNumber, boolean isColumn){
+        checkIfSudokuNumberIsValid(sudokuNumber);
+        return sudokuNumberList.stream().filter(sudNum -> sudNum.getNumber() == sudokuNumber.getNumber() && ((sudNum.getListID() == sudokuNumber.getListID() && !isColumn) || (sudNum.getColumnID() == sudokuNumber.getColumnID() && isColumn))).toList();
     }
 
     /**

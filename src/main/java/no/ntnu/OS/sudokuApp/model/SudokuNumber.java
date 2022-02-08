@@ -12,6 +12,8 @@ public class SudokuNumber {
     
     private final int number;
 
+    private int failureRating;
+
     /**
      * Makes a basic instance of the SudokuNumber
      * @param listID the ID of the list this sudoku number is in. Y direction.
@@ -25,6 +27,22 @@ public class SudokuNumber {
         this.listID = listID;
         this.columnID = columnID;
         this.number = number;
+        failureRating = 1;
+    }
+
+    /**
+     * Makes the failure rating increase with one.
+     */
+    public void incrementFailureRating(){
+        failureRating++;
+    }
+
+    /**
+     * Gets the failure rating of this sudoku number.
+     * @return the failure rating of this object.
+     */
+    public int getFailureRating(){
+        return failureRating;
     }
 
     /**

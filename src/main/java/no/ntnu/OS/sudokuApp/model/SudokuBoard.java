@@ -151,47 +151,85 @@ public class SudokuBoard {
      *
      */
     public List<SudokuNumber> checkPuzzleIsValid(ExecutorService executorService){
-        ThreadList threadList = new ThreadList();
+        ThreadList duplicateNumbers = new ThreadList();
 
         SudokuCheckThread cellCheckThread = new SudokuCheckThread(this,false, false);
         SudokuCheckThread columnCheckThread = new SudokuCheckThread(this, true, false);
         SudokuCheckThread rowCheckThread = new SudokuCheckThread(this,false, true);
 
-        Future<List<SudokuNumber>> futureCell = executorService.submit(cellCheckThread);
-        Future<List<SudokuNumber>> futureColumn = executorService.submit(columnCheckThread);
-        Future<List<SudokuNumber>> futureRow = executorService.submit(rowCheckThread);
+        Future<ThreadList> futureCell = executorService.submit(cellCheckThread);
+        Future<ThreadList> futureColumn = executorService.submit(columnCheckThread);
+        Future<ThreadList> futureRow = executorService.submit(rowCheckThread);
         try {
-            List<SudokuNumber> cellDuplicates = futureCell.get();
-            List<SudokuNumber> columnDuplicates = futureColumn.get();
-            List<SudokuNumber> rowDuplicates = futureRow.get();
-            System.out.println("Amount of faults: " + cellDuplicates.size());
-            System.out.println("Amount of faults " + columnDuplicates.size());
-            System.out.println("Amount of faults after code " + "s");
+            ThreadList cellDuplicates = futureCell.get();
+            ThreadList columnDuplicates = futureColumn.get();
+            ThreadList rowDuplicates = futureRow.get();
+            System.out.println("Amount of faults: " + cellDuplicates.getAllSudokuNumbers().size());
+            System.out.println("Amount of faults: " + columnDuplicates.getAllSudokuNumbers().size());
+            System.out.println("Amount of faults: " + rowDuplicates.getAllSudokuNumbers().size());
             if (size < 4){
-                columnDuplicates.forEach(errorNumber -> rowDuplicates.forEach(secondErrorNumber -> {
-                    if (secondErrorNumber.checkIfPositionIsSame(errorNumber) && !threadList.containsSudokuNumber(errorNumber)){
-                        threadList.addSudokuNumber(errorNumber);
-                    }
-                }));
+                //Todo: Make methods that checks for all the rows and columns for points out guaranteed failure.
+                //Todo: Delete all guaranteed faults and return all the results.
             }else {
-                cellDuplicates.forEach(errorNumber -> columnDuplicates.forEach(secondErrorNumber -> {
-                    if (secondErrorNumber.checkIfPositionIsSame(errorNumber) && !threadList.containsSudokuNumber(secondErrorNumber)){
-                        rowDuplicates.forEach(thirdErrorNumber -> {
-                            if (secondErrorNumber.checkIfPositionIsSame(thirdErrorNumber)){
-                                threadList.addSudokuNumber(thirdErrorNumber);
+                //Todo: Make methods that checks all the cells, rows and columns for points out failures that are guaranteed.
+                cellDuplicates.getAllSudokuNumbers().forEach(dupNum -> rowDuplicates.getAllSudokuNumbers().forEach(secondDupNum -> {
+                    if (dupNum.checkIfPositionIsSame(secondDupNum) && !duplicateNumbers.containsSudokuNumber(secondDupNum)){
+                        columnDuplicates.getAllSudokuNumbers().forEach(thirdSudNum -> {
+                            if (thirdSudNum.checkIfPositionIsSame(secondDupNum)){
+                                secondDupNum.incrementFailureRating();
+                                secondDupNum.incrementFailureRating();
+                                duplicateNumbers.addSudokuNumber(secondDupNum);
                             }
                         });
                     }
                 }));
-            }
-            threadList.getAllSudokuNumbers().forEach(test -> System.out.println(test.getListID() + " " + test.getColumnID() + " " + test.getNumber()));
-            System.out.println("Same numbers :" + threadList.getAllSudokuNumbers().size());
 
+                //Todo: Delete all guaranteed faults and return all the results.
+            }
+            duplicateNumbers.getAllSudokuNumbers().forEach(test -> System.out.println(test.getListID() + " " + test.getColumnID() + " " + test.getNumber()));
+            System.out.println("Same numbers :" + duplicateNumbers.getAllSudokuNumbers().size());
+            combineAllThreadListsIntoDuplicateList(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
 
-        return threadList.getAllSudokuNumbers();
+        return duplicateNumbers.getAllSudokuNumbers();
+    }
+
+    public static void main(String[] args) {
+        SudokuBoard sudokuBoard = new SudokuBoard("4321323434122143");
+        List<SudokuNumber> sudokuNumberList = sudokuBoard.checkPuzzleIsValid(Executors.newFixedThreadPool(3));
+        sudokuNumberList.forEach(sudNum -> System.out.println("X " + sudNum.getColumnID() + " Y " + sudNum.getListID() + " Val " + sudNum.getNumber()));
+    }
+    /**
+     *
+     * @param rowDuplicates
+     * @param columnDuplicates
+     * @param cellDuplicates
+     * @param duplicateNumbers
+     */
+    private void combineAllThreadListsIntoDuplicateList(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList duplicateNumbers){
+        duplicateNumbers.getAllSudokuNumbers().forEach(sudNum -> {
+            columnDuplicates.removeAllNumbersWithSameValueRowAndColumn(sudNum);
+            rowDuplicates.removeAllNumbersWithSameValueRowAndColumn(sudNum);
+            cellDuplicates.removeAllNumbersWithSameValueRowAndColumn(sudNum);
+        });
+
+        rowDuplicates.getAllSudokuNumbers().forEach(sudNum -> {
+            if (!duplicateNumbers.containsSudokuNumber(sudNum)){
+                duplicateNumbers.addSudokuNumber(sudNum);
+            }
+        });
+        cellDuplicates.getAllSudokuNumbers().forEach(sudNum -> {
+            if (!duplicateNumbers.containsSudokuNumber(sudNum)){
+                duplicateNumbers.addSudokuNumber(sudNum);
+            }
+        });
+        columnDuplicates.getAllSudokuNumbers().forEach(sudNum -> {
+            if (!duplicateNumbers.containsSudokuNumber(sudNum)){
+                duplicateNumbers.addSudokuNumber(sudNum);
+            }
+        });
     }
 
     /**

@@ -124,8 +124,21 @@ public class SudokuController implements Controller{
 
         wrongNumbersTable.setItems(FXCollections.observableArrayList(sudokuNumberList));
 
+        String blue = "blue";
+        String red = "red";
+        String green = "green";
         sudokuNumberList.forEach(sudNum -> {
-            sudokuGridPane.lookup("#" + sudNum.getColumnID() + "" + sudNum.getListID()).setStyle("-fx-background-color: red");
+            String color = green;
+            switch (sudNum.getFailureRating()){
+                case 2:
+                    color = blue;
+                    break;
+                case 3:
+                    color = red;
+                    break;
+            }
+
+            sudokuGridPane.lookup("#" + sudNum.getColumnID() + "" + sudNum.getListID()).setStyle("-fx-background-color: " + color + "; -fx-border-radius: 5px;");
         });
     }
 
