@@ -85,14 +85,44 @@ public class ThreadList {
     public void removeAllNumbersWithSameValueRowAndColumn(SudokuNumber sudokuNumber){
         checkIfSudokuNumberIsValid(sudokuNumber);
         removeSudokuNumber(sudokuNumber);
+        boolean rowRemoved = removeRowNumber(sudokuNumber);
+        boolean columnRemoved = removeColumnNumber(sudokuNumber);
+
+        if (!rowRemoved && columnRemoved){
+            removeRowNumber(sudokuNumber);
+        }
+    }
+
+    /**
+     * Removes a sudoku row number if its only one of them.
+     * @param sudokuNumber the sudoku number to remove.
+     * @return <code>true</code> if the object is removed.
+     *         <code>false</code> if the object is not removed.
+     */
+    private boolean removeRowNumber(SudokuNumber sudokuNumber){
+        boolean valid = false;
         List<SudokuNumber> rowList = getAllNumbersWithRowOrColumn(sudokuNumber, false);
         if (rowList.size() == 1){
             sudokuNumberList.remove(rowList.get(0));
+            valid = true;
         }
+        return valid;
+    }
+
+    /**
+     * Removes a sudoku column number if its only one of them.
+     * @param sudokuNumber the sudoku number to remove.
+     * @return <code>true</code> if the object is removed.
+     *         <code>false</code> if the object is not removed.
+     */
+    private boolean removeColumnNumber(SudokuNumber sudokuNumber){
+        boolean valid = false;
         List<SudokuNumber> columnList = getAllNumbersWithRowOrColumn(sudokuNumber, true);
         if (columnList.size() == 1){
             sudokuNumberList.remove(columnList.get(0));
+            valid = true;
         }
+        return valid;
     }
 
     /**

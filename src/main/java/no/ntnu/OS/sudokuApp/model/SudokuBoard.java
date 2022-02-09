@@ -170,30 +170,36 @@ public class SudokuBoard {
             if (size < 4){
                 //Todo: Make methods that checks for all the rows and columns for points out guaranteed failure.
                 //Todo: Delete all guaranteed faults and return all the results.
+                combineTwoAndTwoLists(rowDuplicates, columnDuplicates, duplicateNumbers);
             }else {
                 //Todo: Make methods that checks all the cells, rows and columns for points out failures that are guaranteed.
-                cellDuplicates.getAllSudokuNumbers().forEach(dupNum -> rowDuplicates.getAllSudokuNumbers().forEach(secondDupNum -> {
-                    if (dupNum.checkIfPositionIsSame(secondDupNum) && !duplicateNumbers.containsSudokuNumber(secondDupNum)){
-                        columnDuplicates.getAllSudokuNumbers().forEach(thirdSudNum -> {
-                            if (thirdSudNum.checkIfPositionIsSame(secondDupNum)){
-                                secondDupNum.incrementFailureRating();
-                                secondDupNum.incrementFailureRating();
-                                duplicateNumbers.addSudokuNumber(secondDupNum);
-                            }
-                        });
-                    }
-                }));
+                combineAllThreadListsIntoDuplicateList(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
 
                 //Todo: Delete all guaranteed faults and return all the results.
             }
             duplicateNumbers.getAllSudokuNumbers().forEach(test -> System.out.println(test.getListID() + " " + test.getColumnID() + " " + test.getNumber()));
             System.out.println("Same numbers :" + duplicateNumbers.getAllSudokuNumbers().size());
             combineAllThreadListsIntoDuplicateList(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
+            ThreadList newDuplicateList = new ThreadList();
+            combineRestThreadLists(rowDuplicates, columnDuplicates, cellDuplicates, newDuplicateList);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
 
         return duplicateNumbers.getAllSudokuNumbers();
+    }
+
+    private void combineRestThreadLists(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList newDuplicateList){
+
+    }
+
+    private void combineTwoAndTwoLists(ThreadList firstList, ThreadList secondList, ThreadList duplicateNumbers){
+        firstList.getAllSudokuNumbers().forEach(errorNum -> secondList.getAllSudokuNumbers().forEach(secondErrorNum -> {
+            if (secondErrorNum.checkIfPositionIsSame(errorNum) && !duplicateNumbers.containsSudokuNumber(errorNum)){
+                errorNum.incrementFailureRating();
+                duplicateNumbers.addSudokuNumber(errorNum);
+            }
+        }));
     }
 
     public static void main(String[] args) {
@@ -230,6 +236,27 @@ public class SudokuBoard {
                 duplicateNumbers.addSudokuNumber(sudNum);
             }
         });
+    }
+
+    /**
+     *
+     * @param rowDuplicates
+     * @param columnDuplicates
+     * @param cellDuplicates
+     * @param duplicateNumbers
+     */
+    private void compareAllThreeListsIntoOne(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList duplicateNumbers){
+        cellDuplicates.getAllSudokuNumbers().forEach(dupNum -> rowDuplicates.getAllSudokuNumbers().forEach(secondDupNum -> {
+            if (dupNum.checkIfPositionIsSame(secondDupNum) && !duplicateNumbers.containsSudokuNumber(secondDupNum)){
+                columnDuplicates.getAllSudokuNumbers().forEach(thirdSudNum -> {
+                    if (thirdSudNum.checkIfPositionIsSame(secondDupNum)){
+                        secondDupNum.incrementFailureRating();
+                        secondDupNum.incrementFailureRating();
+                        duplicateNumbers.addSudokuNumber(secondDupNum);
+                    }
+                });
+            }
+        }));
     }
 
     /**
