@@ -1,6 +1,7 @@
 package no.ntnu.OS.sudokuApp.ui.controllers;
 
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -93,9 +94,28 @@ public class SudokuController implements Controller{
         TableColumn<SudokuNumber, Number> wrongCol = new TableColumn<>("Wrong number");
         wrongCol.setCellValueFactory(sudoNum -> new SimpleIntegerProperty(sudoNum.getValue().getNumber()));
 
+        String blue = "blue";
+        String red = "red";
+        String green = "green";
+
+        TableColumn<SudokuNumber, String> colorCol = new TableColumn<>("Error color");
+        colorCol.setCellValueFactory(sudoNum -> {
+            String color = green;
+            switch (sudoNum.getValue().getFailureRating()){
+                case 2:
+                    color = blue;
+                    break;
+                case 3:
+                    color = red;
+                    break;
+            }
+            return new SimpleStringProperty(color);
+        });
+
         wrongNumbersTable.getColumns().add(xCol);
         wrongNumbersTable.getColumns().add(yCol);
         wrongNumbersTable.getColumns().add(wrongCol);
+        wrongNumbersTable.getColumns().add(colorCol);
 
         wrongNumbersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
@@ -138,12 +158,16 @@ public class SudokuController implements Controller{
                     break;
             }
 
-            sudokuGridPane.lookup("#" + sudNum.getColumnID() + "" + sudNum.getListID()).setStyle("-fx-background-color: " + color + "; -fx-border-radius: 5px;");
+            sudokuGridPane.lookup("#" + sudNum.getColumnID() + "" + sudNum.getListID()).setStyle("-fx-background-color: " + color + ";");
         });
     }
 
 
-
+    /**
+     *
+     * @param dimensions
+     * @param gridPane
+     */
     private void addDisplayNumbersOnTop(int dimensions, GridPane gridPane){
         for (int i = 1; i <= dimensions; i++){
             String string = " " + i + " ";

@@ -1,5 +1,7 @@
 package no.ntnu.OS.sudokuApp.model;
 
+import no.ntnu.OS.sudokuApp.ui.SudokuApp;
+
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -152,6 +154,7 @@ public class SudokuBoard {
      */
     public List<SudokuNumber> checkPuzzleIsValid(ExecutorService executorService){
         ThreadList duplicateNumbers = new ThreadList();
+        ThreadList secondDuplicateList = new ThreadList();
 
         SudokuCheckThread cellCheckThread = new SudokuCheckThread(this,false, false);
         SudokuCheckThread columnCheckThread = new SudokuCheckThread(this, true, false);
@@ -173,26 +176,42 @@ public class SudokuBoard {
                 combineTwoAndTwoLists(rowDuplicates, columnDuplicates, duplicateNumbers);
             }else {
                 //Todo: Make methods that checks all the cells, rows and columns for points out failures that are guaranteed.
-                combineAllThreadListsIntoDuplicateList(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
+                compareAllThreeListsIntoOne(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
 
-                //Todo: Delete all guaranteed faults and return all the results.
+                //Todo: Delete all guaranteed faults and return all the results. - Done
             }
             duplicateNumbers.getAllSudokuNumbers().forEach(test -> System.out.println(test.getListID() + " " + test.getColumnID() + " " + test.getNumber()));
             System.out.println("Same numbers :" + duplicateNumbers.getAllSudokuNumbers().size());
             combineAllThreadListsIntoDuplicateList(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
-            ThreadList newDuplicateList = new ThreadList();
-            combineRestThreadLists(rowDuplicates, columnDuplicates, cellDuplicates, newDuplicateList);
+
+            combineRestThreadLists(rowDuplicates, columnDuplicates, cellDuplicates, secondDuplicateList);
+            addRemainingSudoNumbers(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
 
+        List<SudokuNumber> totalFaults = duplicateNumbers.getAllSudokuNumbers();
+        totalFaults.addAll(secondDuplicateList.getAllSudokuNumbers());
         return duplicateNumbers.getAllSudokuNumbers();
     }
 
     private void combineRestThreadLists(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList newDuplicateList){
+        combineTwoAndTwoLists(rowDuplicates, columnDuplicates, newDuplicateList);
+        combineTwoAndTwoLists(rowDuplicates, cellDuplicates, newDuplicateList);
+        combineTwoAndTwoLists(cellDuplicates, columnDuplicates, newDuplicateList);
+        List<SudokuNumber> secondDuplicate = newDuplicateList.getAllSudokuNumbers();
+        rowDuplicates.removeAllNumbersWithSameValueRowAndColumnAndAlsoCell(secondDuplicate, this, false);
+        columnDuplicates.removeAllNumbersWithSameValueRowAndColumnAndAlsoCell(secondDuplicate, this, false);
+        cellDuplicates.removeAllNumbersWithSameValueRowAndColumnAndAlsoCell(secondDuplicate, this, true);
 
     }
 
+    /**
+     * Combines two threadlsists into one.
+     * @param firstList the first list.
+     * @param secondList the second list.
+     * @param duplicateNumbers the last list.
+     */
     private void combineTwoAndTwoLists(ThreadList firstList, ThreadList secondList, ThreadList duplicateNumbers){
         firstList.getAllSudokuNumbers().forEach(errorNum -> secondList.getAllSudokuNumbers().forEach(secondErrorNum -> {
             if (secondErrorNum.checkIfPositionIsSame(errorNum) && !duplicateNumbers.containsSudokuNumber(errorNum)){
@@ -208,19 +227,20 @@ public class SudokuBoard {
         sudokuNumberList.forEach(sudNum -> System.out.println("X " + sudNum.getColumnID() + " Y " + sudNum.getListID() + " Val " + sudNum.getNumber()));
     }
     /**
-     *
-     * @param rowDuplicates
-     * @param columnDuplicates
-     * @param cellDuplicates
-     * @param duplicateNumbers
+     * Combines all threadlists into one duplicate list.
+     * @param rowDuplicates the row duplicates.
+     * @param columnDuplicates the column duplicates
+     * @param cellDuplicates the cell duplicates
+     * @param duplicateNumbers the wanted duplicate numbers list.
      */
     private void combineAllThreadListsIntoDuplicateList(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList duplicateNumbers){
-        duplicateNumbers.getAllSudokuNumbers().forEach(sudNum -> {
-            columnDuplicates.removeAllNumbersWithSameValueRowAndColumn(sudNum);
-            rowDuplicates.removeAllNumbersWithSameValueRowAndColumn(sudNum);
-            cellDuplicates.removeAllNumbersWithSameValueRowAndColumn(sudNum);
-        });
+        List<SudokuNumber> duplicateSudoNumbers = duplicateNumbers.getAllSudokuNumbers();
+        columnDuplicates.removeAllNumbersWithSameValueRowAndColumnAndAlsoCell(duplicateSudoNumbers, this, false);
+        rowDuplicates.removeAllNumbersWithSameValueRowAndColumnAndAlsoCell(duplicateSudoNumbers, this, false);
+        cellDuplicates.removeAllNumbersWithSameValueRowAndColumnAndAlsoCell(duplicateSudoNumbers, this, true);
+    }
 
+    private void addRemainingSudoNumbers(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList duplicateNumbers){
         rowDuplicates.getAllSudokuNumbers().forEach(sudNum -> {
             if (!duplicateNumbers.containsSudokuNumber(sudNum)){
                 duplicateNumbers.addSudokuNumber(sudNum);
@@ -239,11 +259,11 @@ public class SudokuBoard {
     }
 
     /**
-     *
-     * @param rowDuplicates
-     * @param columnDuplicates
-     * @param cellDuplicates
-     * @param duplicateNumbers
+     * Compares all the three lists and finds what they have in common. Also removes the already selected numbers.
+     * @param rowDuplicates the row duplicates.
+     * @param columnDuplicates the column duplicates.
+     * @param cellDuplicates the cell duplicates
+     * @param duplicateNumbers the duplicate numbers that
      */
     private void compareAllThreeListsIntoOne(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList duplicateNumbers){
         cellDuplicates.getAllSudokuNumbers().forEach(dupNum -> rowDuplicates.getAllSudokuNumbers().forEach(secondDupNum -> {

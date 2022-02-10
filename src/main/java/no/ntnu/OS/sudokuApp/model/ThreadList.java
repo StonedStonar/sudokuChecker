@@ -75,22 +75,32 @@ public class ThreadList {
      * @param sudokuNumber the sudoku number to remove.
      */
     private void removeSudokuNumber(SudokuNumber sudokuNumber){
-        sudokuNumberList.remove(sudokuNumber);
+        List<SudokuNumber> sudokuNumbers = sudokuNumberList.stream().filter(sudNum -> sudNum.checkIfPositionIsSame(sudokuNumber)).toList();
+        sudokuNumberList.removeAll(sudokuNumbers);
     }
 
     /**
      * Removes all the numbers that are on the same row and column as the input number if it's not above 1.
-     * @param sudokuNumber the sudoku number to remove and remove all copies of.
+     * @param sudokuNumbers the sudoku numbers to remove and remove all copies of.
+     * @param sudokuBoard the sudoku board it's about.
+     * @param cell <code>true</code> if the list is a cell.
+     *             <code>false</code> if the list is not a cell.
      */
-    public void removeAllNumbersWithSameValueRowAndColumn(SudokuNumber sudokuNumber){
-        checkIfSudokuNumberIsValid(sudokuNumber);
-        removeSudokuNumber(sudokuNumber);
-        boolean rowRemoved = removeRowNumber(sudokuNumber);
-        boolean columnRemoved = removeColumnNumber(sudokuNumber);
+    public void removeAllNumbersWithSameValueRowAndColumnAndAlsoCell(List<SudokuNumber> sudokuNumbers, SudokuBoard sudokuBoard, boolean cell){
+        checkIfSudokuNumberListIsValid(sudokuNumbers);
+        sudokuNumbers.forEach(sudNum -> removeSudokuNumber(sudNum));
+        sudokuNumbers.forEach(sudokuNumber -> {
+            if (cell){
+                removeAllNumbersInTheSameCell(sudokuNumber, sudokuBoard);
+            }else {
+                boolean rowRemoved = removeRowNumber(sudokuNumber);
+                boolean columnRemoved = removeColumnNumber(sudokuNumber);
 
-        if (!rowRemoved && columnRemoved){
-            removeRowNumber(sudokuNumber);
-        }
+                if (!rowRemoved && columnRemoved){
+                    removeRowNumber(sudokuNumber);
+                }
+            }
+        });
     }
 
     /**
@@ -126,6 +136,22 @@ public class ThreadList {
     }
 
     /**
+     *
+     * @param sudokuNumber
+     * @param sudokuBoard the current sudoku board.
+     * @return
+     */
+    private boolean removeAllNumbersInTheSameCell(SudokuNumber sudokuNumber, SudokuBoard sudokuBoard){
+        boolean valid = false;
+        List<SudokuNumber> sudokuNumbers = getAllNumbersWithinTheSameCell(sudokuNumber, sudokuBoard);
+        if (sudokuNumbers.size() == 1){
+            sudokuNumberList.remove(sudokuNumbers.get(0));
+            valid = true;
+        }
+        return valid;
+    }
+
+    /**
      * Gets all the number that is on the same row or column.
      * @param sudokuNumber the sudoku number to search for.
      * @param isColumn <code>true</code> if it's going to look for numbers on the same column.
@@ -135,6 +161,41 @@ public class ThreadList {
     private List<SudokuNumber> getAllNumbersWithRowOrColumn(SudokuNumber sudokuNumber, boolean isColumn){
         checkIfSudokuNumberIsValid(sudokuNumber);
         return sudokuNumberList.stream().filter(sudNum -> sudNum.getNumber() == sudokuNumber.getNumber() && ((sudNum.getListID() == sudokuNumber.getListID() && !isColumn) || (sudNum.getColumnID() == sudokuNumber.getColumnID() && isColumn))).toList();
+    }
+
+    private List<SudokuNumber> getAllNumbersWithinTheSameCell(SudokuNumber sudokuNumber, SudokuBoard sudokuBoard){
+        double dimensions = Math.sqrt(sudokuBoard.getSize());
+        List<SudokuNumber> sudNumList = new ArrayList<>();
+        if (dimensions == (int) dimensions){
+            int startX = 0;
+            int endX = 0;
+            int startY = 0;
+            int endY = 0;
+            int i = 0;
+            while ((startX == 0 || startY == 0) && i < dimensions){
+                int startVal = (int) (dimensions * 0) + 1;
+                int stopVal = (int) dimensions * (i+1);
+                if (sudokuNumber.getColumnID() >= startVal && sudokuNumber.getColumnID() <= stopVal){
+                    startX = startVal;
+                    endX = stopVal;
+                }
+                if (sudokuNumber.getListID() >= startVal && sudokuNumber.getListID() <= stopVal){
+                    startY = startVal;
+                    endY = stopVal;
+                }
+                i++;
+            }
+            Iterator<SudokuNumber> it = sudokuNumberList.iterator();
+            while(it.hasNext()){
+                SudokuNumber sudNum = it.next();
+                if (sudNum.getListID() >= startX && sudNum.getListID() <= endX && sudNum.getColumnID() >= startY && sudNum.getColumnID() <= endY && sudNum.getNumber() == sudokuNumber.getNumber()){
+                    sudNumList.add(sudNum);
+                }
+            }
+        }else {
+            throw new NumberFormatException("The dimensions of the Sudokuboard must be nxn.");
+        }
+        return sudNumList;
     }
 
     /**
@@ -171,6 +232,14 @@ public class ThreadList {
      */
     private void checkIfSudokuNumberIsValid(SudokuNumber sudokuNumber){
         checkIfObjectIsNull(sudokuNumber, "Sudoku number");
+    }
+
+    /**
+     * Checks if the sudoku number list is zero or not.
+     * @param sudokuNumbers the list with all the sudoku numbers.
+     */
+    private void checkIfSudokuNumberListIsValid(List<SudokuNumber> sudokuNumbers){
+        checkIfObjectIsNull(sudokuNumbers, "sudoku numbers");
     }
 
 
