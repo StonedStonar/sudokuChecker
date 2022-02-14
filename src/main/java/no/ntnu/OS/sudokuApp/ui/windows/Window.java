@@ -6,7 +6,7 @@ import no.ntnu.OS.sudokuApp.ui.controllers.Controller;
 /**
  * Represents the basic methods a window should have.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public interface Window {
 

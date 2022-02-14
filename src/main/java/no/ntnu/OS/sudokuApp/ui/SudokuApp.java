@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 /**
  * Represents the loading of the sudoku app.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public class SudokuApp extends Application {
 

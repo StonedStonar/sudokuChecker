@@ -3,9 +3,9 @@ package no.ntnu.OS.sudokuApp.ui.popups;
 import javafx.scene.control.Alert;
 
 /**
- *
+ * A builder class for alerts.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public class AlertBuilder {
 

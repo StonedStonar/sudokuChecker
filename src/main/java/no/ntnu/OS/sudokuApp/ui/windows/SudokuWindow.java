@@ -7,21 +7,19 @@ import no.ntnu.OS.sudokuApp.ui.controllers.SudokuController;
 /**
  * Represents the main window of the sudoku application.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public class SudokuWindow implements Window{
 
-    private String title;
+    private final String title;
 
-    private SudokuController controller;
+    private final SudokuController controller;
 
     private Scene scene;
 
-    private String fxmlName;
+    private final String fxmlName;
 
     private static SudokuWindow sudokuWindow;
-
-
 
     /**
       * Makes an instance of the SudokuWindow class.
@@ -43,18 +41,6 @@ public class SudokuWindow implements Window{
             }
         }
         return sudokuWindow;
-    }
-
-    /**
-     * Checks if a string is of a valid format or not.
-     * @param stringToCheck the string you want to check.
-     * @param errorPrefix the error the exception should have if the string is invalid.
-     */
-    private void checkString(String stringToCheck, String errorPrefix){
-        checkIfObjectIsNull(stringToCheck, errorPrefix);
-        if (stringToCheck.isEmpty()){
-            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
-        }
     }
     
     /**

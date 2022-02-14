@@ -3,7 +3,7 @@ package no.ntnu.OS.sudokuApp.ui.controllers;
 /**
  * Represents a general controller that is used in the loading and acting in a scene.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public interface Controller {
 

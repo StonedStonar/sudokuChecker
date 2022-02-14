@@ -2,18 +2,17 @@ package no.ntnu.OS.sudokuApp.model;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Represents a class that holds a row and numbers in it.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public class Row {
 
-    private ArrayList<Integer> rowList;
+    private final ArrayList<Integer> rowList;
 
-    private int size;
+    private final int size;
 
     /**
      * Makes an instance of the row class.

@@ -1,27 +1,22 @@
 package no.ntnu.OS.sudokuApp.model;
 
-import javafx.beans.Observable;
-import no.ntnu.OS.sudokuApp.ui.SudokuApp;
-
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A class that represents a basic sudoku board.
  * @version 0.1
- * @author Steinar Hjelle Midthus & Kenneth Misund
+ * @author Group 13
  */
 public class SudokuBoard implements ObservableSudokuBoard {
 
-    private Map<Integer, Row> rowMap;
+    private final Map<Integer, Row> rowMap;
 
     private final int size;
 
-    private List<SudokuBoardObserver> sudokuBoardObservers;
+    private final List<SudokuBoardObserver> sudokuBoardObservers;
 
     /**
      * Makes a SudokuBoard with the solution as a string.
@@ -32,32 +27,15 @@ public class SudokuBoard implements ObservableSudokuBoard {
         this.size = getDimensions(sudokuSolution);
         rowMap = new HashMap<>();
         addAllRows(size);
-        parseFromStringAndAdd(sudokuSolution);
+        parseFromStringAndAddToBoard(sudokuSolution);
         sudokuBoardObservers =  new LinkedList<>();
-    }
-
-    /**
-     * Prints all the rows in a "grid" fashion that can be used for testing and visualsation.
-     */
-    public void printAllRows(){
-        AtomicInteger i = new AtomicInteger(1);
-        System.out.println("Plass  1 2 3 4 5 6 7 8 9");
-        System.out.println("________________________");
-        rowMap.values().forEach(row -> {
-            System.out.print("Row " + i + ": ");
-            row.getIterator().forEachRemaining(element -> {
-                System.out.print(element + " ");
-            });
-            System.out.println();
-            i.addAndGet(1);
-        });
     }
 
     /**
      * Parses the values of this table from an input string.
      * @param sudokuSolution the sudoku solution to parse.
      */
-    private void parseFromStringAndAdd(String sudokuSolution){
+    private void parseFromStringAndAddToBoard(String sudokuSolution){
         List<Integer> numbers = parseNumbersFromStringToList(sudokuSolution);
         int numberToAdd = 0;
         for (int i = 1; i <= size; i++){
@@ -93,14 +71,6 @@ public class SudokuBoard implements ObservableSudokuBoard {
     }
 
     /**
-     * Checks if the input size is above zero.
-     * @param size the size to check.
-     */
-    private void checkSize(int size){
-        checkIfNumberIsAboveZero(size, "size");
-    }
-
-    /**
      * Adds a row to the sudoku board.
      * @param row adds a row to the
      * @param ID the ID of the row.
@@ -128,7 +98,7 @@ public class SudokuBoard implements ObservableSudokuBoard {
     }
 
     /**
-     * Gets the dimensions of a string to check if its whole.
+     * Gets the dimensions of a string to check if it's a nxn board.
      * @param string the string to check for a nxn matrix.
      * @return the dimensions of this string. If string is 81 letters then it returns 9.
      * @throws NumberFormatException if the number is not an even square number.
@@ -161,34 +131,34 @@ public class SudokuBoard implements ObservableSudokuBoard {
             ThreadList cellDuplicates = futureCell.get();
             ThreadList columnDuplicates = futureColumn.get();
             ThreadList rowDuplicates = futureRow.get();
-            System.out.println("Amount of faults: " + cellDuplicates.getAllSudokuNumbers().size());
-            System.out.println("Amount of faults: " + columnDuplicates.getAllSudokuNumbers().size());
-            System.out.println("Amount of faults: " + rowDuplicates.getAllSudokuNumbers().size());
             if (size < 4){
-                //Todo: Make methods that checks for all the rows and columns for points out guaranteed failure.
-                //Todo: Delete all guaranteed faults and return all the results.
                 combineTwoAndTwoLists(rowDuplicates, columnDuplicates, duplicateNumbers);
             }else {
-                //Todo: Make methods that checks all the cells, rows and columns for points out failures that are guaranteed.
                 compareAllThreeListsIntoOne(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
-
-                //Todo: Delete all guaranteed faults and return all the results. - Done
             }
-            duplicateNumbers.getAllSudokuNumbers().forEach(test -> System.out.println(test.getListID() + " " + test.getColumnID() + " " + test.getNumber()));
-            System.out.println("Same numbers :" + duplicateNumbers.getAllSudokuNumbers().size());
             combineAllThreadListsIntoDuplicateList(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
 
             combineRestThreadLists(rowDuplicates, columnDuplicates, cellDuplicates, secondDuplicateList);
             addRemainingSudoNumbers(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
+
         } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
+            notifyAboutError();
+            Thread.currentThread().interrupt();
         }
+
 
         List<SudokuNumber> totalFaults = duplicateNumbers.getAllSudokuNumbers();
         totalFaults.addAll(secondDuplicateList.getAllSudokuNumbers());
         notifyObservers(duplicateNumbers);
     }
 
+    /**
+     * Combines all the lists into different lists to look for errors that are on two checks.
+     * @param rowDuplicates the row duplicates.
+     * @param columnDuplicates the column duplicates.
+     * @param cellDuplicates the cell duplicates.
+     * @param newDuplicateList the new duplicate list.
+     */
     private void combineRestThreadLists(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList newDuplicateList){
         combineTwoAndTwoLists(rowDuplicates, columnDuplicates, newDuplicateList);
         combineTwoAndTwoLists(rowDuplicates, cellDuplicates, newDuplicateList);
@@ -201,7 +171,7 @@ public class SudokuBoard implements ObservableSudokuBoard {
     }
 
     /**
-     * Combines two threadlsists into one.
+     * Combines two thread lists into one. If the two lists has one number in common it will add it to the duplicate numbers list.
      * @param firstList the first list.
      * @param secondList the second list.
      * @param duplicateNumbers the last list.
@@ -216,7 +186,7 @@ public class SudokuBoard implements ObservableSudokuBoard {
     }
 
     /**
-     * Combines all threadlists into one duplicate list.
+     * Combines all thread lists into one duplicate list.
      * @param rowDuplicates the row duplicates.
      * @param columnDuplicates the column duplicates
      * @param cellDuplicates the cell duplicates
@@ -229,6 +199,13 @@ public class SudokuBoard implements ObservableSudokuBoard {
         cellDuplicates.removeAllNumbersWithSameValueRowAndColumnAndAlsoCell(duplicateSudoNumbers, this, true);
     }
 
+    /**
+     * Adds all the remaining error numbers to the duplicate numbers list.
+     * @param rowDuplicates the rows duplicate numbers.
+     * @param columnDuplicates the columns duplicate numbers.
+     * @param cellDuplicates the cells duplicate numbers.
+     * @param duplicateNumbers the duplicate numbers.
+     */
     private void addRemainingSudoNumbers(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList duplicateNumbers){
         rowDuplicates.getAllSudokuNumbers().forEach(sudNum -> {
             if (!duplicateNumbers.containsSudokuNumber(sudNum)){
@@ -289,19 +266,6 @@ public class SudokuBoard implements ObservableSudokuBoard {
     }
 
     /**
-     * Checks if number is between max and min.
-     * @param number the number to be validated.
-     * @param min the minimum number value. The minimum value is included.
-     * @param max maximum number value. The maximum value is included.
-     */
-    private void checkIfNumberIsValid(int number, int min, int max, String prefix) {
-        if (number > max || number < min) {
-            throw new IllegalArgumentException("Invalid input! " + prefix + " can't be above "
-                    + max  + " or under " + min + "to be valid");
-        }
-    }
-
-    /**
      * Checks if the number is above zero.
      * @param numberToCheck the number to check.
      * @param prefix the error that the exception should have.
@@ -339,6 +303,11 @@ public class SudokuBoard implements ObservableSudokuBoard {
     public void notifyObservers(ThreadList threadList) {
         checkIfObjectIsNull(threadList, "threadlist");
         this.sudokuBoardObservers.forEach(observer -> observer.update(threadList.getAllSudokuNumbers()));
+    }
+
+    @Override
+    public void notifyAboutError() {
+        sudokuBoardObservers.forEach(SudokuBoardObserver::indicateError);
     }
 
     /**

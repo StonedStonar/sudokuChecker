@@ -4,9 +4,9 @@ import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
- *
+ * Represents a sudoku check thread that checks the input board for errors.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public class SudokuCheckThread implements Callable<ThreadList> {
 
@@ -18,6 +18,12 @@ public class SudokuCheckThread implements Callable<ThreadList> {
 
     /**
       * Makes an instance of the SudokuCheckThread class.
+      *  If both input booleans are false then this thread checks the cells.
+      * @param sudokuBoard the sudoku board this thread is about to check.
+      * @param checkColumn <code>true</code> if the thread is going to check the columns of the board.
+      *                    <code>false</code> if the thread is not going to check the columns.
+      * @param checkRow  <code>true</code> if the thread is going to check the rows of the sudoku board.
+     *                   <code>false</code> if the thread is not going to check the rows.
       */
     public SudokuCheckThread(SudokuBoard sudokuBoard, boolean checkColumn, boolean checkRow){
         checkIfObjectIsNull(sudokuBoard, "sudokuboard");
@@ -67,10 +73,6 @@ public class SudokuCheckThread implements Callable<ThreadList> {
                 pos++;
             }
         }
-        threadListMap.values().forEach(ThreadList::printAllElements);
-        System.out.println("Row check results: " + duplicateNumbers.getAllSudokuNumbers().size());
-        duplicateNumbers.getAllSudokuNumbers().forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
-
         return duplicateNumbers;
     }
 
@@ -86,8 +88,6 @@ public class SudokuCheckThread implements Callable<ThreadList> {
 
             int dimensions = (int) Math.round(Math.sqrt(size));
 
-            System.out.println("Dimensions : " + dimensions);
-
             //Skaffer alle iteratorene og legger dem i et map.
             int cellCount = 1;
 
@@ -95,7 +95,7 @@ public class SudokuCheckThread implements Callable<ThreadList> {
                 Iterator<Integer> it = sudokuBoard.getRowIterator(i);
                 int p = 1;
                 int nextList = cellCount;
-                ThreadList threadList = null;
+                ThreadList threadList;
                 //Map used to find the first of a duplicate. Since we can have many duplicates we need more than one
                 while (it.hasNext()){
                     threadList = threadListMap.get(nextList);
@@ -115,10 +115,6 @@ public class SudokuCheckThread implements Callable<ThreadList> {
                     cellCount = cellCount + dimensions;
                 }
             }
-
-            threadListMap.values().forEach(ThreadList::printAllElements);
-            System.out.println("Cell check results: ");
-            duplicateNumbers.getAllSudokuNumbers().forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
         }
         return duplicateNumbers;
     }
@@ -172,9 +168,6 @@ public class SudokuCheckThread implements Callable<ThreadList> {
                 p++;
             }
         }
-        System.out.println("Column check: ");
-        threadListMap.values().forEach(ThreadList::printAllElements);
-        duplicateNumbers.getAllSudokuNumbers().forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
         return duplicateNumbers;
     }
     

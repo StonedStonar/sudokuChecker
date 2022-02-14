@@ -13,6 +13,7 @@ import no.ntnu.OS.sudokuApp.model.SudokuBoard;
 import no.ntnu.OS.sudokuApp.model.SudokuBoardObserver;
 import no.ntnu.OS.sudokuApp.model.SudokuNumber;
 import no.ntnu.OS.sudokuApp.ui.SudokuApp;
+import no.ntnu.OS.sudokuApp.ui.popups.AlertBuilder;
 
 import java.io.*;
 import java.util.Arrays;
@@ -21,9 +22,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 /**
- *
+ * Represents a sudoku controller that helps the sudoku window with actions on the page.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public class SudokuController implements Controller, SudokuBoardObserver {
 
@@ -63,7 +64,7 @@ public class SudokuController implements Controller, SudokuBoardObserver {
             try {
                 displaySudokuBoard(string);
             }catch (NumberFormatException exception){
-                makeAndShowErrorMessage();
+                makeAndShowCouldNotSolveAlert();
             }
         });
         importSudokuSoltuionButton.setOnAction(event -> chooseAndLoadFile());
@@ -72,11 +73,9 @@ public class SudokuController implements Controller, SudokuBoardObserver {
     /**
      * Makes and shows the error message.
      */
-    private void makeAndShowErrorMessage(){
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Could not solve");
-        alert.setHeaderText("Could not solve sudoku puzzle");
-        alert.setContentText("Could not solve sudoku puzzle since the format is not nxn. \nLike 4x4");
+    private void makeAndShowCouldNotSolveAlert(){
+        Alert alert = new AlertBuilder(Alert.AlertType.ERROR).setTitle("Could not solve")
+                .setHeaderText("Could not solve sudoku puzzle").setContext("Could not solve sudoku puzzle since the format is not nxn. \nLike 4x4. Remember it can only contain numbers. \nPlease try again.").build();
         alert.showAndWait();
     }
 
@@ -98,25 +97,21 @@ public class SudokuController implements Controller, SudokuBoardObserver {
                 }
                 displaySudokuBoard(stringBuilder.toString());
             } catch (IOException exception) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("File is empty");
-                alert.setHeaderText("File is empty");
-                alert.setContentText("The chosen file is empty. \nPlease choose a .csv file.");
+                Alert alert = new AlertBuilder(Alert.AlertType.ERROR).setTitle("File is empty")
+                        .setHeaderText("File is empty").setContext("The chosen file is empty. \nPlease choose a .csv file.").build();
                 alert.showAndWait();
             }catch (IllegalArgumentException exception){
-                makeAndShowErrorMessage();
+                makeAndShowCouldNotSolveAlert();
             }
         }else {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Invalid file format");
-            alert.setHeaderText("Invalid file format");
-            alert.setContentText("The format of the chosen file is not a CSV. \nPlease try again.");
+            Alert alert = new AlertBuilder(Alert.AlertType.ERROR).setTitle("Invalid file format")
+                    .setHeaderText("Invalid file format").setContext("The format of the chosen file is not a CSV. \nPlease try again.").build();
             alert.showAndWait();
         }
     }
 
     /**
-     * Adds all the defined listeneres.
+     * Adds all the defined listeners.
      */
     private void addListeners(){
         String standardMessage = "Please enter a sudoku solution that is nxn big.";
@@ -179,10 +174,15 @@ public class SudokuController implements Controller, SudokuBoardObserver {
         wrongNumbersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
+    /**
+     * Makes the sudoku board and displays it for the user. Also starts the checks in the background.
+     * @param string the input solution in a long string.
+     */
     private void displaySudokuBoard(String string){
         int dimensions = getDimensions(string);
         SudokuBoard sudokuBoard = SudokuApp.getSudokuApp().makeAndGetNewSudokuBoard(string);
         checkSolButton.setDisable(true);
+        importSudokuSoltuionButton.setDisable(true);
         int realSize = dimensions + 1;
         sudokuGridPane = new GridPane();
         sudokuGridPane.setHgap(realSize);
@@ -228,6 +228,7 @@ public class SudokuController implements Controller, SudokuBoardObserver {
         });
         wrongNumbersTable.setItems(FXCollections.observableArrayList(sudokuNumberList));
         checkSolButton.setDisable(false);
+        importSudokuSoltuionButton.setDisable(false);
     }
 
 
@@ -306,5 +307,14 @@ public class SudokuController implements Controller, SudokuBoardObserver {
     @Override
     public void update(List<SudokuNumber> sudokuNumberList) {
         Platform.runLater(() -> displayInvalidNumbers(sudokuNumberList));
+    }
+
+    @Override
+    public void indicateError() {
+        Platform.runLater(() -> {
+            Alert alert = new AlertBuilder(Alert.AlertType.INFORMATION).setTitle("Error processing").setHeaderText("Error processing")
+                    .setContext("A error has occurred processing the input sudoku board. \nCheck the format and please try again.").build();
+            alert.showAndWait();
+        });
     }
 }

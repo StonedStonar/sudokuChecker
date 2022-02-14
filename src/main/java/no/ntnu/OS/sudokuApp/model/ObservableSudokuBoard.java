@@ -2,7 +2,7 @@ package no.ntnu.OS.sudokuApp.model;
 /**
  * Represents a sudoku board that can be observed by other entities.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public interface ObservableSudokuBoard {
 
@@ -23,4 +23,9 @@ public interface ObservableSudokuBoard {
      * @param threadList the resulting threadlist.
      */
     void notifyObservers(ThreadList threadList);
+
+    /**
+     * Notifies all the observers that an error has occured.
+     */
+    void notifyAboutError();
 }

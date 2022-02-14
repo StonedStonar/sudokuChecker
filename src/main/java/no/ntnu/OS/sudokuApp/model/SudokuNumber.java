@@ -2,7 +2,7 @@ package no.ntnu.OS.sudokuApp.model;
 /**
  * Represents a basic object that can hold a SudokuNumber's position and value.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public class SudokuNumber {
 
@@ -79,6 +79,18 @@ public class SudokuNumber {
         checkIfObjectIsNull(sudokuNumber, "sudoku number");
         boolean valid = sudokuNumber.getColumnID() == this.columnID && sudokuNumber.getListID() == this.listID && sudokuNumber.getNumber() == this.number;
         return valid;
+    }
+
+    /**
+     * Checks if this sudoku number is in the same cell.
+     * @param startX the start position of the cell. (included)
+     * @param endX the end position of the cell (included)
+     * @param startY the start y position of the cell (included)
+     * @param endY the end position of the cell (included)
+     * @return
+     */
+    public boolean checkIfNumberIsInCell(int startX, int endX, int startY, int endY){
+        return getListID() >= startX && getListID() <= endX && getColumnID() >= startY && getColumnID() <= endY && getNumber() == getNumber();
     }
 
     /**

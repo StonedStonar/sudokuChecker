@@ -8,7 +8,7 @@ import java.util.Optional;
 /**
  * Represents an object that holds each cell we are going through.
  * @version 0.1
- * @author Steinar Hjelle Midthus
+ * @author Group 13
  */
 public class ThreadList {
 
@@ -42,19 +42,13 @@ public class ThreadList {
         Iterator<SudokuNumber> it = this.sudokuNumberList.iterator();
         boolean success = false;
 
-        // Takes in the numbers to go through
         while(it.hasNext() && !success){
-            // Gets the next number to go through
             SudokuNumber sudoNumb = it.next();
-            // Checks if number matches another number from the list.
             if (sudoNumb.getNumber() == number) {
-                // return true if number matches. and goes out of the while-loop.
                 success = true;
             }
         }
-        
-        //How it can be done.
-        //sudokuNumberList.stream().anyMatch(sudnum -> sudnum.getNumber() == number);
+
         return success;
     }
 
@@ -136,8 +130,8 @@ public class ThreadList {
     }
 
     /**
-     *
-     * @param sudokuNumber
+     * Removes all the numbers that are in the same cell as the sudoku number if amount is not above 2.
+     * @param sudokuNumber the sudoku number to remove duplicates for.
      * @param sudokuBoard the current sudoku board.
      * @return
      */
@@ -163,6 +157,12 @@ public class ThreadList {
         return sudokuNumberList.stream().filter(sudNum -> sudNum.getNumber() == sudokuNumber.getNumber() && ((sudNum.getListID() == sudokuNumber.getListID() && !isColumn) || (sudNum.getColumnID() == sudokuNumber.getColumnID() && isColumn))).toList();
     }
 
+    /**
+     * Gets all the numbers that are in the same cell. Done by magic and math.
+     * @param sudokuNumber the sudoku number that is in a cell.
+     * @param sudokuBoard the sudoku board that has the size.
+     * @return a list with all the numbers that is equal to the input sudoku number in value and placement by cell.
+     */
     private List<SudokuNumber> getAllNumbersWithinTheSameCell(SudokuNumber sudokuNumber, SudokuBoard sudokuBoard){
         double dimensions = Math.sqrt(sudokuBoard.getSize());
         List<SudokuNumber> sudNumList = new ArrayList<>();
@@ -172,7 +172,7 @@ public class ThreadList {
             int startY = 0;
             int endY = 0;
             int i = 0;
-            while ((startX == 0 || startY == 0) && i < dimensions){
+            while (checkIfOneOfTwoNumbersAreZero(startX, startY) && i < dimensions){
                 int startVal = (int) (dimensions * 0) + 1;
                 int stopVal = (int) dimensions * (i+1);
                 if (sudokuNumber.getColumnID() >= startVal && sudokuNumber.getColumnID() <= stopVal){
@@ -186,24 +186,30 @@ public class ThreadList {
                 i++;
             }
             Iterator<SudokuNumber> it = sudokuNumberList.iterator();
-            while(it.hasNext()){
-                SudokuNumber sudNum = it.next();
-                if (sudNum.getListID() >= startX && sudNum.getListID() <= endX && sudNum.getColumnID() >= startY && sudNum.getColumnID() <= endY && sudNum.getNumber() == sudokuNumber.getNumber()){
-                    sudNumList.add(sudNum);
+            int finalEndX = endX;
+            int finalStartX = startX;
+            int finalStartY = startY;
+            int finalEndY = endY;
+            it.forEachRemaining(num -> {
+                if (num.checkIfNumberIsInCell(finalStartX, finalEndX, finalStartY, finalEndY)){
+                    sudNumList.add(num);
                 }
-            }
+            });
         }else {
-            throw new NumberFormatException("The dimensions of the Sudokuboard must be nxn.");
+            throw new NumberFormatException("The dimensions of the Sudoku board must be nxn.");
         }
         return sudNumList;
     }
 
     /**
-     * Prints all the elements in this thread list.
+     * Checks if one of the two numbers are zero.
+     * @param val1 the first value.
+     * @param val2 the last value.
+     * @return <code>true</code> if one of the values are zero.
+     *         <code>false</code> if none of the values are zero.
      */
-    public void printAllElements(){
-        sudokuNumberList.forEach(number -> System.out.print(number.getNumber() + " "));
-        System.out.println();
+    private boolean checkIfOneOfTwoNumbersAreZero(int val1, int val2){
+        return val1 == 0 || val2 == 0;
     }
 
     /**
@@ -214,8 +220,11 @@ public class ThreadList {
     public SudokuNumber getFirstOfNumber(int firstNumber){
         checkIfNumberIsAboveZero(firstNumber, "first number");
         Optional<SudokuNumber> opSud = sudokuNumberList.stream().filter(sudnum -> sudnum.getNumber() == firstNumber).findFirst();
-        //Todo: Endre denne slik at den kan kaste exceptions.
-        return opSud.get();
+        if (opSud.isPresent()){
+            return opSud.get();
+        }else {
+            throw new IllegalArgumentException("The number with the value " + firstNumber + " is not in this threadlist.");
+        }
     }
 
     /**
@@ -241,10 +250,6 @@ public class ThreadList {
     private void checkIfSudokuNumberListIsValid(List<SudokuNumber> sudokuNumbers){
         checkIfObjectIsNull(sudokuNumbers, "sudoku numbers");
     }
-
-
-
-
 
     /**
      * Checks if the number is above zero.
