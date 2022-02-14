@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableView?>
@@ -12,7 +13,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane fx:id="mainPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="589.0" prefWidth="987.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane fx:id="mainPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="589.0" prefWidth="1044.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <top>
       <Label text="Sudoku validator v0.1" BorderPane.alignment="CENTER">
          <font>
@@ -32,19 +33,22 @@
    <bottom>
       <HBox prefHeight="202.0" prefWidth="987.0" BorderPane.alignment="CENTER">
          <children>
-            <VBox prefHeight="100.0" prefWidth="491.0">
+            <VBox prefHeight="202.0" prefWidth="539.0">
                <children>
-                  <VBox prefHeight="195.0" prefWidth="489.0">
+                  <VBox prefHeight="195.0" prefWidth="554.0">
                      <children>
                         <Label text="Wrong numbers">
                            <VBox.margin>
                               <Insets />
                            </VBox.margin>
                            <font>
-                              <Font size="16.0" />
+                              <Font name="System Bold" size="16.0" />
                            </font>
                         </Label>
-                        <TableView fx:id="wrongNumbersTable" prefHeight="173.0" prefWidth="469.0" />
+                        <TableView fx:id="wrongNumbersTable" prefHeight="173.0" prefWidth="469.0">
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy></TableView>
                      </children>
                      <padding>
                         <Insets bottom="5.0" left="10.0" right="10.0" />
@@ -58,9 +62,10 @@
                      <children>
                         <Label text="Colors:">
                            <font>
-                              <Font size="16.0" />
+                              <Font name="System Bold" size="16.0" />
                            </font>
                         </Label>
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Gold: The number is not beteween the min and max value" />
                         <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Red: All three checks has shown this as a common error" />
                         <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Blue: Two tests has shown this as an potential error" />
                         <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Green: One test has shown this as a potential error" />
@@ -71,16 +76,11 @@
                            </VBox.margin>
                         </Text>
                         <Text strokeType="OUTSIDE" strokeWidth="0.0" text="After that fix them all to get the solution" />
-                        <Button fx:id="importSudokuSoltuionButton" mnemonicParsing="false" text="Import sudokusolution CSV">
-                           <VBox.margin>
-                              <Insets top="10.0" />
-                           </VBox.margin>
-                        </Button>
                      </children>
                   </VBox>
                   <VBox prefHeight="121.0" prefWidth="308.0">
                      <children>
-                        <Label text="Enter sudoku solution">
+                        <Label text="Enter sudoku solution (max 9x9)">
                            <VBox.margin>
                               <Insets top="2.0" />
                            </VBox.margin>
@@ -92,6 +92,18 @@
                               <Insets top="2.0" />
                            </VBox.margin>
                         </Button>
+                        <CheckBox fx:id="delayBox" layoutX="20.0" layoutY="103.0" mnemonicParsing="false" text="3-Second delay">
+                           <VBox.margin>
+                              <Insets top="5.0" />
+                           </VBox.margin>
+                        </CheckBox>
+                        <Button fx:id="importSudokuSoltuionButton" mnemonicParsing="false" text="Import sudokusolution CSV">
+                           <VBox.margin>
+                              <Insets top="10.0" />
+                           </VBox.margin>
+                        </Button>
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Import has no limit" />
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="but must be nxn" />
                      </children>
                      <padding>
                         <Insets left="10.0" right="10.0" />

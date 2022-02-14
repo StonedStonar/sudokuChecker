@@ -9,6 +9,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import no.ntnu.OS.sudokuApp.model.Row;
 import no.ntnu.OS.sudokuApp.model.SudokuBoard;
 import no.ntnu.OS.sudokuApp.model.SudokuBoardObserver;
 import no.ntnu.OS.sudokuApp.model.SudokuNumber;
@@ -18,6 +19,7 @@ import no.ntnu.OS.sudokuApp.ui.popups.AlertBuilder;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
@@ -46,6 +48,9 @@ public class SudokuController implements Controller, SudokuBoardObserver {
     @FXML
     private Text errorText;
 
+    @FXML
+    private CheckBox delayBox;
+
     private GridPane sudokuGridPane;
 
     /**
@@ -62,9 +67,14 @@ public class SudokuController implements Controller, SudokuBoardObserver {
         checkSolButton.setOnAction(event -> {
             String string = textField.getText();
             try {
-                displaySudokuBoard(string);
+                displaySudokuBoard(SudokuApp.getSudokuApp().makeAndGetNewSudokuBoardWithString(string));
+                textField.setText("");
             }catch (NumberFormatException exception){
                 makeAndShowCouldNotSolveAlert();
+            }catch (IllegalArgumentException exception){
+                Alert alert = new AlertBuilder(Alert.AlertType.ERROR).setTitle("The input cannot be empty")
+                        .setHeaderText("The input cannot be empty").setContext("The input sudoku solution cannot be empty. \nPlease try again").build();
+                alert.showAndWait();
             }
         });
         importSudokuSoltuionButton.setOnAction(event -> chooseAndLoadFile());
@@ -86,16 +96,18 @@ public class SudokuController implements Controller, SudokuBoardObserver {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
         File file = fileChooser.showOpenDialog(null);
+        List<Row> rowList = new LinkedList<>();
         if (file != null && file.isFile()){
             try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))){
                 String word = bufferedReader.readLine();
-                StringBuilder stringBuilder = new StringBuilder();
                 while (word != null){
+                    Row row = new Row();
                     String[] letters = word.split(",");
-                    Arrays.stream(letters).forEach(letter -> stringBuilder.append(letter.strip()));
+                    Arrays.stream(letters).forEach(letter -> row.addNumber(Integer.parseInt(letter)));
+                    rowList.add(row);
                     word = bufferedReader.readLine();
                 }
-                displaySudokuBoard(stringBuilder.toString());
+                displaySudokuBoard(SudokuApp.getSudokuApp().makeAndGetNewSudokuBoardWithListOfRows(rowList));
             } catch (IOException exception) {
                 Alert alert = new AlertBuilder(Alert.AlertType.ERROR).setTitle("File is empty")
                         .setHeaderText("File is empty").setContext("The chosen file is empty. \nPlease choose a .csv file.").build();
@@ -103,10 +115,6 @@ public class SudokuController implements Controller, SudokuBoardObserver {
             }catch (IllegalArgumentException exception){
                 makeAndShowCouldNotSolveAlert();
             }
-        }else {
-            Alert alert = new AlertBuilder(Alert.AlertType.ERROR).setTitle("Invalid file format")
-                    .setHeaderText("Invalid file format").setContext("The format of the chosen file is not a CSV. \nPlease try again.").build();
-            alert.showAndWait();
         }
     }
 
@@ -145,23 +153,31 @@ public class SudokuController implements Controller, SudokuBoardObserver {
         TableColumn<SudokuNumber, Number> wrongCol = new TableColumn<>("Wrong number");
         wrongCol.setCellValueFactory(sudoNum -> new SimpleIntegerProperty(sudoNum.getValue().getNumber()));
 
+        TableColumn<SudokuNumber, String> validNumber = new TableColumn<>("Valid");
+        validNumber.setCellValueFactory(sudoNum -> {
+            String valid = "true";
+            if (sudoNum.getValue().isInvalidNumber()){
+                valid = "false";
+            }
+            return new SimpleStringProperty(valid);
+        });
+
         String blue = "blue";
         String red = "red";
         String green = "green";
+        String gold = "gold";
 
         TableColumn<SudokuNumber, String> colorCol = new TableColumn<>("Error color");
         colorCol.setCellValueFactory(sudoNum -> {
             String color;
-            switch (sudoNum.getValue().getFailureRating()){
-                case 2:
-                    color = blue;
-                    break;
-                case 3:
-                    color = red;
-                    break;
-                default:
-                    color = green;
-                    break;
+            if (!sudoNum.getValue().isInvalidNumber()){
+                color = switch (sudoNum.getValue().getFailureRating()) {
+                    case 2 -> blue;
+                    case 3 -> red;
+                    default -> green;
+                };
+            }else {
+                color = gold;
             }
             return new SimpleStringProperty(color);
         });
@@ -170,17 +186,14 @@ public class SudokuController implements Controller, SudokuBoardObserver {
         wrongNumbersTable.getColumns().add(yCol);
         wrongNumbersTable.getColumns().add(wrongCol);
         wrongNumbersTable.getColumns().add(colorCol);
-
-        wrongNumbersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        wrongNumbersTable.getColumns().add(validNumber);
     }
 
     /**
      * Makes the sudoku board and displays it for the user. Also starts the checks in the background.
-     * @param string the input solution in a long string.
      */
-    private void displaySudokuBoard(String string){
-        int dimensions = getDimensions(string);
-        SudokuBoard sudokuBoard = SudokuApp.getSudokuApp().makeAndGetNewSudokuBoard(string);
+    private void displaySudokuBoard(SudokuBoard sudokuBoard){
+        int dimensions = sudokuBoard.getSize();
         checkSolButton.setDisable(true);
         importSudokuSoltuionButton.setDisable(true);
         int realSize = dimensions + 1;
@@ -206,7 +219,7 @@ public class SudokuController implements Controller, SudokuBoardObserver {
 
         sudokuBoard.registerObserver(this);
 
-        executorService.submit(() -> sudokuBoard.checkPuzzleIsValid(SudokuApp.getSudokuApp().getExecutorService()));
+        executorService.submit(() -> sudokuBoard.checkPuzzleIsValid(SudokuApp.getSudokuApp().getExecutorService(), delayBox.isSelected()));
     }
 
     /**
@@ -214,20 +227,25 @@ public class SudokuController implements Controller, SudokuBoardObserver {
      * @param sudokuNumberList the sudoku number list to check.
      */
     private void displayInvalidNumbers(List<SudokuNumber> sudokuNumberList){
-        String blue = "blue";
+        String blue = "deepskyblue";
         String red = "red";
-        String green = "green";
+        String green = "darkseagreen";
+        String gold = "gold";
         sudokuNumberList.forEach(sudNum -> {
-            String color = switch (sudNum.getFailureRating()) {
-                case 2 -> blue;
-                case 3 -> red;
-                default -> green;
-            };
+            String color;
+            if (!sudNum.isInvalidNumber()){
+                color = switch (sudNum.getFailureRating()) {
+                    case 2 -> blue;
+                    case 3 -> red;
+                    default -> green;
+                };
+            }else {
+                color = gold;
+            }
 
             sudokuGridPane.lookup("#" + sudNum.getColumnID() + "" + sudNum.getListID()).setStyle("-fx-background-color: " + color + ";");
         });
         wrongNumbersTable.setItems(FXCollections.observableArrayList(sudokuNumberList));
-        checkSolButton.setDisable(false);
         importSudokuSoltuionButton.setDisable(false);
     }
 
@@ -306,7 +324,13 @@ public class SudokuController implements Controller, SudokuBoardObserver {
 
     @Override
     public void update(List<SudokuNumber> sudokuNumberList) {
-        Platform.runLater(() -> displayInvalidNumbers(sudokuNumberList));
+        Platform.runLater(() -> {
+            displayInvalidNumbers(sudokuNumberList);
+            Alert alert = new AlertBuilder(Alert.AlertType.INFORMATION).setTitle("Checks are done").setHeaderText("Checks are done")
+                    .setContext("The row, cell and column checks are now done.").build();
+            alert.showAndWait();
+        });
+
     }
 
     @Override

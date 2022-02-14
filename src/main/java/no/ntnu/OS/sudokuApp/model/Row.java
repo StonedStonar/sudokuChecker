@@ -12,7 +12,11 @@ public class Row {
 
     private final ArrayList<Integer> rowList;
 
-    private final int size;
+    private int size;
+
+    private boolean predefinedSize;
+
+
 
     /**
      * Makes an instance of the row class.
@@ -22,17 +26,16 @@ public class Row {
         checkIfNumberIsAboveZero(size, "size");
         rowList = new ArrayList<>(size);
         this.size = size;
+        predefinedSize = true;
     }
 
     /**
-     * Adds a number to the specified place in the row.
-     * @param place the spot the number should be put in.
-     * @param number the number to put in that spot.
+     * Makes an instance of row where the size is not set.
      */
-    public void addNumberByPlace(int place, int number){
-        checkNumberToAdd(number);
-        checkPlace(place);
-        rowList.add(place, number);
+    public Row(){
+        predefinedSize = false;
+        rowList = new ArrayList<>();
+        this.size = 0;
     }
 
     /**
@@ -42,6 +45,9 @@ public class Row {
     public void addNumber(int numberToAdd){
         checkNumberToAdd(numberToAdd);
         rowList.add(numberToAdd);
+        if (!predefinedSize){
+            size++;
+        }
     }
 
     /**
@@ -57,7 +63,7 @@ public class Row {
      * @return max size of the row.
      */
     public int getSizeRow() {
-         return rowList.size();
+         return size;
     }
 
     /**
@@ -74,20 +80,12 @@ public class Row {
     }
 
     /**
-     * Checks if the place is above zero.
-     * @param place the place you want to check.
-     */
-    private void checkPlace(int place){
-        checkIfNumberIsValid(place, 0, size-1, "place");
-    }
-
-    /**
      * Checks if the number to add is above zero.
      * @param numberToAdd the number you want to add.
      *
      */
     private void checkNumberToAdd(int numberToAdd){
-        checkIfNumberIsValid(numberToAdd, 0, size, "number to add");
+        checkIfNumberIsValid(numberToAdd, 0, Integer.MAX_VALUE, "number to add");
     }
 
     /**

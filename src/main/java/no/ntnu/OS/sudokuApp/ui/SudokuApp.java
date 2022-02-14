@@ -4,12 +4,14 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import no.ntnu.OS.sudokuApp.model.Row;
 import no.ntnu.OS.sudokuApp.model.SudokuBoard;
 import no.ntnu.OS.sudokuApp.ui.controllers.Controller;
 import no.ntnu.OS.sudokuApp.ui.windows.SudokuWindow;
 import no.ntnu.OS.sudokuApp.ui.windows.Window;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -58,9 +60,20 @@ public class SudokuApp extends Application {
      * @param sudokuSolution the sudoku solution to make into a board.
      * @return the new sudoku board.
      */
-    public SudokuBoard makeAndGetNewSudokuBoard(String sudokuSolution){
+    public SudokuBoard makeAndGetNewSudokuBoardWithString(String sudokuSolution){
         checkString(sudokuSolution, "sudoku solution");
         this.sudokuBoard = new SudokuBoard(sudokuSolution);
+        return sudokuBoard;
+    }
+
+    /**
+     * Makes a new sudoku board with list of rows.
+     * @param rowList the list with rows.
+     * @return a new sudokuboard.
+     */
+    public SudokuBoard makeAndGetNewSudokuBoardWithListOfRows(List<Row> rowList){
+        checkIfObjectIsNull(rowList, "row list");
+        this.sudokuBoard = new SudokuBoard(rowList);
         return sudokuBoard;
     }
 

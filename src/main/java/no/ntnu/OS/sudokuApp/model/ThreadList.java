@@ -65,6 +65,16 @@ public class ThreadList {
     }
 
     /**
+     * Gets all the numbers that are invalid and removes them from this threadlist.
+     * @return a list with all the numbers that are invalid.
+     */
+    public List<SudokuNumber> getAllInvalidSudokuNumbers(){
+        List<SudokuNumber> invalidSudokuNumbers = sudokuNumberList.stream().filter(sudNum -> sudNum.isInvalidNumber()).toList();
+        invalidSudokuNumbers.forEach(sudokuNumberList::remove);
+        return invalidSudokuNumbers;
+    }
+
+    /**
      * Removes a sudoku number from the list.
      * @param sudokuNumber the sudoku number to remove.
      */
@@ -133,7 +143,8 @@ public class ThreadList {
      * Removes all the numbers that are in the same cell as the sudoku number if amount is not above 2.
      * @param sudokuNumber the sudoku number to remove duplicates for.
      * @param sudokuBoard the current sudoku board.
-     * @return
+     * @return <code>true</code> if all the same numbers were deleted.
+     *         <code>false</code> if not all the same numbers could be deleted
      */
     private boolean removeAllNumbersInTheSameCell(SudokuNumber sudokuNumber, SudokuBoard sudokuBoard){
         boolean valid = false;

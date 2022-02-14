@@ -64,16 +64,27 @@ public class SudokuCheckThread implements Callable<ThreadList> {
             int pos = 1;
             while (it.hasNext()) {
                 int nextNumber = it.next();
-                SudokuNumber sudokuNumber = new SudokuNumber(i, pos, nextNumber);
-                if (threadList.contains(nextNumber)) {
+                SudokuNumber sudokuNumber = new SudokuNumber(i, pos, nextNumber, getIfSudokuNumberIsInvalid(nextNumber, size));
+                if (threadList.contains(nextNumber) || sudokuNumber.isInvalidNumber()) {
                     duplicateNumbers.addSudokuNumber(sudokuNumber);
-                    checkAndAddFirstNumberIfNotInThreadList(nextNumber,threadList, duplicateNumbers);
+                    checkAndAddFirstNumberIfNotInThreadList(nextNumber,threadList, duplicateNumbers, sudokuNumber.isInvalidNumber());
                 }
                 threadList.addSudokuNumber(sudokuNumber);
                 pos++;
             }
         }
         return duplicateNumbers;
+    }
+
+    /**
+     * Checks if the number is above the max or under 1.
+     * @param number the number to check for.
+     * @param max the max value.
+     * @return <code>true</code> if the value is above max or below min.
+     *         <code>false</code> if the value is valid.
+     */
+    private boolean getIfSudokuNumberIsInvalid(int number, int max){
+        return number > max || number < 1;
     }
 
     /**
@@ -100,10 +111,10 @@ public class SudokuCheckThread implements Callable<ThreadList> {
                 while (it.hasNext()){
                     threadList = threadListMap.get(nextList);
                     int number = it.next();
-                    SudokuNumber sudokuNumber = new SudokuNumber(i, p, number);
-                    if (threadList.contains(number)){
+                    SudokuNumber sudokuNumber = new SudokuNumber(i, p, number, getIfSudokuNumberIsInvalid(number, size));
+                    if (threadList.contains(number) || sudokuNumber.isInvalidNumber()){
                         duplicateNumbers.addSudokuNumber(sudokuNumber);
-                        checkAndAddFirstNumberIfNotInThreadList(number, threadList, duplicateNumbers);
+                        checkAndAddFirstNumberIfNotInThreadList(number, threadList, duplicateNumbers, sudokuNumber.isInvalidNumber());
                     }
                     threadList.addSudokuNumber(sudokuNumber);
                     if (p % dimensions == 0){
@@ -125,7 +136,8 @@ public class SudokuCheckThread implements Callable<ThreadList> {
      */
     private Map<Integer, ThreadList> makeThreadListMapWithLists(){
         Map<Integer, ThreadList> threadListMap = new HashMap<>();
-        for (int i = 1; i <= sudokuBoard.getSize(); i++){
+        int size = sudokuBoard.getSize();
+        for (int i = 1; i <= size; i++){
             threadListMap.put(i, new ThreadList());
         }
         return threadListMap;
@@ -136,11 +148,15 @@ public class SudokuCheckThread implements Callable<ThreadList> {
      * @param number the number to check after.
      * @param threadList the thread list to add to.
      * @param duplicateNumbers the object with all the duplicate numbers.
+     * @param isInvalid <code>true</code> if the number is invalid.
+     *                  <code>false</code> if the number is not invalid.
      */
-    private void checkAndAddFirstNumberIfNotInThreadList(int number, ThreadList threadList, ThreadList duplicateNumbers){
-        SudokuNumber firstNumber = threadList.getFirstOfNumber(number);
-        if (!duplicateNumbers.containsSudokuNumber(firstNumber)){
-            duplicateNumbers.addSudokuNumber(firstNumber);
+    private void checkAndAddFirstNumberIfNotInThreadList(int number, ThreadList threadList, ThreadList duplicateNumbers, boolean isInvalid){
+        if (!isInvalid){
+            SudokuNumber firstNumber = threadList.getFirstOfNumber(number);
+            if (!duplicateNumbers.containsSudokuNumber(firstNumber)){
+                duplicateNumbers.addSudokuNumber(firstNumber);
+            }
         }
     }
 
@@ -159,10 +175,10 @@ public class SudokuCheckThread implements Callable<ThreadList> {
             while (it.hasNext()){
                 ThreadList threadList = threadListMap.get(p);
                 int number = it.next();
-                SudokuNumber sudokuNumber = new SudokuNumber(i, p, number);
-                if (threadList.contains(number)){
+                SudokuNumber sudokuNumber = new SudokuNumber(i, p, number, getIfSudokuNumberIsInvalid(number, size));
+                if (threadList.contains(number) || sudokuNumber.isInvalidNumber()){
                     duplicateNumbers.addSudokuNumber(sudokuNumber);
-                    checkAndAddFirstNumberIfNotInThreadList(number, threadList, duplicateNumbers);
+                    checkAndAddFirstNumberIfNotInThreadList(number, threadList, duplicateNumbers, sudokuNumber.isInvalidNumber());
                 }
                 threadList.addSudokuNumber(sudokuNumber);
                 p++;

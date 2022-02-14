@@ -14,13 +14,15 @@ public class SudokuNumber {
 
     private int failureRating;
 
+    private final boolean invalidNumber;
+
     /**
      * Makes a basic instance of the SudokuNumber
      * @param listID the ID of the list this sudoku number is in. Y direction.
      * @param columnID the column ID this number is in. Y direction. This is the index in the list.
      * @param number the number you want to be the main focus on.
      */
-    public SudokuNumber(int listID, int columnID, int number){
+    public SudokuNumber(int listID, int columnID, int number, boolean invalidNumber){
         checkIfNumberIsAboveZero(listID, "listID");
         checkIfNumberIsAboveZero(columnID, "columnID");
         checkIfNumberIsAboveZero(number, "number");
@@ -28,6 +30,17 @@ public class SudokuNumber {
         this.columnID = columnID;
         this.number = number;
         failureRating = 1;
+        this.invalidNumber = invalidNumber;
+
+    }
+
+    /**
+     * Gets if this sudoku number is above the max limit.
+     * @return <code>true</code> if the sudoku number is invalid.
+     *         <code>false</code> if the sudoku number is not invalid.
+     */
+    public boolean isInvalidNumber() {
+        return invalidNumber;
     }
 
     /**

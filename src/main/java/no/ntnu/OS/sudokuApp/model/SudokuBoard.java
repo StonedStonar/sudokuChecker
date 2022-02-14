@@ -32,6 +32,36 @@ public class SudokuBoard implements ObservableSudokuBoard {
     }
 
     /**
+     * Makes an instance of the Sudoku board.
+     * @param rows a list with all the rows. Must be nxn
+     */
+    public SudokuBoard(List<Row> rows){
+        checkIfObjectIsNull(rows, "list with rows");
+        rowMap = new HashMap<>();
+        this.size = rows.size();
+        sudokuBoardObservers = new LinkedList<>();
+        if (checkIfRowListIsNxN(rows)){
+            for (int i = 1; i <= rows.size(); i++) {
+                rowMap.put(i, rows.get(i-1));
+            }
+        }else {
+            throw new IllegalArgumentException("The input rows must be NxN in size.");
+        }
+    }
+
+    /**
+     * Checks if the row list is NxN in size.
+     * @param rows the list with rows to check.
+     * @return <code>true</code> if all the rows are the same size as the input.
+     *         <code>false</code> if all the rows are not the same size as the input.
+     */
+    private boolean checkIfRowListIsNxN(List<Row> rows){
+        return rows.stream().allMatch(row -> row.getSizeRow() == rows.size());
+    }
+
+
+
+    /**
      * Parses the values of this table from an input string.
      * @param sudokuSolution the sudoku solution to parse.
      */
@@ -114,9 +144,18 @@ public class SudokuBoard implements ObservableSudokuBoard {
 
     /**
      * Checks if the sudoku puzzle is valid.
-     * @param executorService
+     * @param executorService the executor service to submit the threads on.
+     * @param delay <code>true</code> if there is going to be a 3-second delay before the check is executed.
+     *              <code>false</code> if there is not going to be a delay.
      */
-    public void checkPuzzleIsValid(ExecutorService executorService){
+    public void checkPuzzleIsValid(ExecutorService executorService, boolean delay){
+        if (delay){
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         ThreadList duplicateNumbers = new ThreadList();
         ThreadList secondDuplicateList = new ThreadList();
 
@@ -131,6 +170,7 @@ public class SudokuBoard implements ObservableSudokuBoard {
             ThreadList cellDuplicates = futureCell.get();
             ThreadList columnDuplicates = futureColumn.get();
             ThreadList rowDuplicates = futureRow.get();
+            getAllNumbersOverLimit(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
             if (size < 4){
                 combineTwoAndTwoLists(rowDuplicates, columnDuplicates, duplicateNumbers);
             }else {
@@ -141,16 +181,40 @@ public class SudokuBoard implements ObservableSudokuBoard {
             combineRestThreadLists(rowDuplicates, columnDuplicates, cellDuplicates, secondDuplicateList);
             addRemainingSudoNumbers(rowDuplicates, columnDuplicates, cellDuplicates, duplicateNumbers);
 
+            List<SudokuNumber> totalFaults = duplicateNumbers.getAllSudokuNumbers();
+            totalFaults.addAll(secondDuplicateList.getAllSudokuNumbers());
+            notifyObservers(duplicateNumbers);
         } catch (ExecutionException | InterruptedException e) {
             notifyAboutError();
             Thread.currentThread().interrupt();
         }
-
-
-        List<SudokuNumber> totalFaults = duplicateNumbers.getAllSudokuNumbers();
-        totalFaults.addAll(secondDuplicateList.getAllSudokuNumbers());
-        notifyObservers(duplicateNumbers);
     }
+
+    /**
+     * Gets all the numbers that are above the max limit.
+     * @param rowDuplicates the row duplicates.
+     * @param columnDuplicates the column duplicates.
+     * @param cellDuplicates the cell duplicates.
+     * @param duplicateList the duplicate list.
+     */
+    private void getAllNumbersOverLimit(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList duplicateList){
+        List<SudokuNumber> rowDup = rowDuplicates.getAllInvalidSudokuNumbers();
+        List<SudokuNumber> colDup = columnDuplicates.getAllInvalidSudokuNumbers();
+        List<SudokuNumber> cellDup = cellDuplicates.getAllInvalidSudokuNumbers();
+
+        combineListAndThreadList(rowDup, duplicateList);
+        combineListAndThreadList(colDup, duplicateList);
+        combineListAndThreadList(cellDup, duplicateList);
+    }
+
+    private void combineListAndThreadList(List<SudokuNumber> sudokuNumbers, ThreadList threadList){
+        sudokuNumbers.forEach(number -> {
+            if (!threadList.containsSudokuNumber(number)){
+                threadList.addSudokuNumber(number);
+            }
+        });
+    }
+
 
     /**
      * Combines all the lists into different lists to look for errors that are on two checks.
