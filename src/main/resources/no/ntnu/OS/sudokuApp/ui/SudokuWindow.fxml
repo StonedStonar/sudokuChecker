@@ -18,6 +18,9 @@
          <font>
             <Font size="20.0" />
          </font>
+         <BorderPane.margin>
+            <Insets bottom="5.0" top="5.0" />
+         </BorderPane.margin>
       </Label>
    </top>
    <center>
@@ -68,6 +71,11 @@
                            </VBox.margin>
                         </Text>
                         <Text strokeType="OUTSIDE" strokeWidth="0.0" text="After that fix them all to get the solution" />
+                        <Button fx:id="importSudokuSoltuionButton" mnemonicParsing="false" text="Import sudokusolution CSV">
+                           <VBox.margin>
+                              <Insets top="10.0" />
+                           </VBox.margin>
+                        </Button>
                      </children>
                   </VBox>
                   <VBox prefHeight="121.0" prefWidth="308.0">

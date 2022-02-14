@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- *
+ * Represents the loading of the sudoku app.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
@@ -33,7 +33,7 @@ public class SudokuApp extends Application {
       */
     public SudokuApp(){
         try {
-            executorService = Executors.newFixedThreadPool(3);
+            executorService = Executors.newFixedThreadPool(4);
             sudokuApp = this;
         }catch (Exception exception){
 

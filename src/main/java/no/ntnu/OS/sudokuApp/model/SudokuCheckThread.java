@@ -74,11 +74,6 @@ public class SudokuCheckThread implements Callable<ThreadList> {
         return duplicateNumbers;
     }
 
-    public static void main(String[] args) {
-        SudokuCheckThread sudokuCheckThread = new SudokuCheckThread(new SudokuBoard("1212"), false, false);
-        sudokuCheckThread.checkColumns();
-    }
-
     /**
      * Checks each cell in an n x n matrix.
      * @return A list with all the sudoku numbers that are seen twice.
@@ -181,18 +176,6 @@ public class SudokuCheckThread implements Callable<ThreadList> {
         threadListMap.values().forEach(ThreadList::printAllElements);
         duplicateNumbers.getAllSudokuNumbers().forEach(number -> System.out.println("Y: " + number.getListID() + " X: " + number.getColumnID() + " Number value: " + number.getNumber()));
         return duplicateNumbers;
-    }
-    
-    /**
-     * Checks if a string is of a valid format or not.
-     * @param stringToCheck the string you want to check.
-     * @param errorPrefix the error the exception should have if the string is invalid.
-     */
-    private void checkString(String stringToCheck, String errorPrefix){
-        checkIfObjectIsNull(stringToCheck, errorPrefix);
-        if (stringToCheck.isEmpty()){
-            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
-        }
     }
     
     /**

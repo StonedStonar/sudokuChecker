@@ -1,5 +1,6 @@
 package no.ntnu.OS.sudokuApp.ui.controllers;
 
+import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -7,19 +8,24 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import no.ntnu.OS.sudokuApp.model.SudokuBoard;
+import no.ntnu.OS.sudokuApp.model.SudokuBoardObserver;
 import no.ntnu.OS.sudokuApp.model.SudokuNumber;
 import no.ntnu.OS.sudokuApp.ui.SudokuApp;
 
+import java.io.*;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  *
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class SudokuController implements Controller{
+public class SudokuController implements Controller, SudokuBoardObserver {
 
     @FXML
     private TableView<SudokuNumber> wrongNumbersTable;
@@ -31,37 +37,87 @@ public class SudokuController implements Controller{
     private Button checkSolButton;
 
     @FXML
+    private Button importSudokuSoltuionButton;
+
+    @FXML
     private ScrollPane scrollPane;
 
     @FXML
     private Text errorText;
 
-    private int spacing;
+    private GridPane sudokuGridPane;
 
     /**
       * Makes an instance of the SudokuController class.
       */
-    public SudokuController(){
-        spacing = 20;
+    public SudokuController() {
+        //Lul
     }
 
+    /**
+     * Sets the functions of the buttons.
+     */
     private void setButtonFunctions(){
         checkSolButton.setOnAction(event -> {
             String string = textField.getText();
             try {
-                int dimensions = getDimensions(string);
-                SudokuBoard sudokuBoard = SudokuApp.getSudokuApp().makeAndGetNewSudokuBoard(string);
-                displaySudokuBoard(sudokuBoard, dimensions);
+                displaySudokuBoard(string);
             }catch (NumberFormatException exception){
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Could not solve");
-                alert.setHeaderText("Could not solve sudoku puzzle");
-                alert.setContentText("Could not solve sudoku puzzle since the format is not nxn. \nLike 4x4");
-                alert.showAndWait();
+                makeAndShowErrorMessage();
             }
         });
+        importSudokuSoltuionButton.setOnAction(event -> chooseAndLoadFile());
     }
 
+    /**
+     * Makes and shows the error message.
+     */
+    private void makeAndShowErrorMessage(){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Could not solve");
+        alert.setHeaderText("Could not solve sudoku puzzle");
+        alert.setContentText("Could not solve sudoku puzzle since the format is not nxn. \nLike 4x4");
+        alert.showAndWait();
+    }
+
+    /**
+     * Chooses a file and loads the sudoku board.
+     */
+    private void chooseAndLoadFile(){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
+        File file = fileChooser.showOpenDialog(null);
+        if (file != null && file.isFile()){
+            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))){
+                String word = bufferedReader.readLine();
+                StringBuilder stringBuilder = new StringBuilder();
+                while (word != null){
+                    String[] letters = word.split(",");
+                    Arrays.stream(letters).forEach(letter -> stringBuilder.append(letter.strip()));
+                    word = bufferedReader.readLine();
+                }
+                displaySudokuBoard(stringBuilder.toString());
+            } catch (IOException exception) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("File is empty");
+                alert.setHeaderText("File is empty");
+                alert.setContentText("The chosen file is empty. \nPlease choose a .csv file.");
+                alert.showAndWait();
+            }catch (IllegalArgumentException exception){
+                makeAndShowErrorMessage();
+            }
+        }else {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Invalid file format");
+            alert.setHeaderText("Invalid file format");
+            alert.setContentText("The format of the chosen file is not a CSV. \nPlease try again.");
+            alert.showAndWait();
+        }
+    }
+
+    /**
+     * Adds all the defined listeneres.
+     */
     private void addListeners(){
         String standardMessage = "Please enter a sudoku solution that is nxn big.";
         errorText.setText(standardMessage);
@@ -100,13 +156,16 @@ public class SudokuController implements Controller{
 
         TableColumn<SudokuNumber, String> colorCol = new TableColumn<>("Error color");
         colorCol.setCellValueFactory(sudoNum -> {
-            String color = green;
+            String color;
             switch (sudoNum.getValue().getFailureRating()){
                 case 2:
                     color = blue;
                     break;
                 case 3:
                     color = red;
+                    break;
+                default:
+                    color = green;
                     break;
             }
             return new SimpleStringProperty(color);
@@ -120,9 +179,12 @@ public class SudokuController implements Controller{
         wrongNumbersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
-    private void displaySudokuBoard(SudokuBoard sudokuBoard, int dimensions){
+    private void displaySudokuBoard(String string){
+        int dimensions = getDimensions(string);
+        SudokuBoard sudokuBoard = SudokuApp.getSudokuApp().makeAndGetNewSudokuBoard(string);
+        checkSolButton.setDisable(true);
         int realSize = dimensions + 1;
-        GridPane sudokuGridPane = new GridPane();
+        sudokuGridPane = new GridPane();
         sudokuGridPane.setHgap(realSize);
         sudokuGridPane.setVgap(realSize);
         addDisplayNumbersOnTop(dimensions, sudokuGridPane);
@@ -140,33 +202,39 @@ public class SudokuController implements Controller{
         sudokuGridPane.styleProperty().set("-fx-alignment: center");
         scrollPane.setContent(sudokuGridPane);
 
-        List<SudokuNumber> sudokuNumberList = sudokuBoard.checkPuzzleIsValid(SudokuApp.getSudokuApp().getExecutorService());
+        ExecutorService executorService = SudokuApp.getSudokuApp().getExecutorService();
 
-        wrongNumbersTable.setItems(FXCollections.observableArrayList(sudokuNumberList));
+        sudokuBoard.registerObserver(this);
 
+        executorService.submit(() -> sudokuBoard.checkPuzzleIsValid(SudokuApp.getSudokuApp().getExecutorService()));
+    }
+
+    /**
+     * Displays the invalid numbers that is given by the underlying threads.
+     * @param sudokuNumberList the sudoku number list to check.
+     */
+    private void displayInvalidNumbers(List<SudokuNumber> sudokuNumberList){
         String blue = "blue";
         String red = "red";
         String green = "green";
         sudokuNumberList.forEach(sudNum -> {
-            String color = green;
-            switch (sudNum.getFailureRating()){
-                case 2:
-                    color = blue;
-                    break;
-                case 3:
-                    color = red;
-                    break;
-            }
+            String color = switch (sudNum.getFailureRating()) {
+                case 2 -> blue;
+                case 3 -> red;
+                default -> green;
+            };
 
             sudokuGridPane.lookup("#" + sudNum.getColumnID() + "" + sudNum.getListID()).setStyle("-fx-background-color: " + color + ";");
         });
+        wrongNumbersTable.setItems(FXCollections.observableArrayList(sudokuNumberList));
+        checkSolButton.setDisable(false);
     }
 
 
     /**
-     *
-     * @param dimensions
-     * @param gridPane
+     * Adds display numbers on the side and on the top.
+     * @param dimensions the dimensions of the board.
+     * @param gridPane the grid pane to add the numbers to.
      */
     private void addDisplayNumbersOnTop(int dimensions, GridPane gridPane){
         for (int i = 1; i <= dimensions; i++){
@@ -233,5 +301,10 @@ public class SudokuController implements Controller{
     public void emptyContent() {
         textField.textProperty().set("");
         wrongNumbersTable = new TableView<>();
+    }
+
+    @Override
+    public void update(List<SudokuNumber> sudokuNumberList) {
+        Platform.runLater(() -> displayInvalidNumbers(sudokuNumberList));
     }
 }

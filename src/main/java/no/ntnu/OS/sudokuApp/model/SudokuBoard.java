@@ -1,5 +1,6 @@
 package no.ntnu.OS.sudokuApp.model;
 
+import javafx.beans.Observable;
 import no.ntnu.OS.sudokuApp.ui.SudokuApp;
 
 import java.util.*;
@@ -14,22 +15,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @version 0.1
  * @author Steinar Hjelle Midthus & Kenneth Misund
  */
-public class SudokuBoard {
+public class SudokuBoard implements ObservableSudokuBoard {
 
     private Map<Integer, Row> rowMap;
 
     private final int size;
 
-    /**
-     * Makes an instance of the SudokuBoard.
-     * @param size the size this map should have. This is in the Y direction.
-     */
-    public SudokuBoard(int size){
-        checkSize(size);
-        rowMap = new HashMap<>();
-        this.size = size;
-        addAllRows(size);
-    }
+    private List<SudokuBoardObserver> sudokuBoardObservers;
 
     /**
      * Makes a SudokuBoard with the solution as a string.
@@ -41,6 +33,7 @@ public class SudokuBoard {
         rowMap = new HashMap<>();
         addAllRows(size);
         parseFromStringAndAdd(sudokuSolution);
+        sudokuBoardObservers =  new LinkedList<>();
     }
 
     /**
@@ -150,9 +143,10 @@ public class SudokuBoard {
     }
 
     /**
-     *
+     * Checks if the sudoku puzzle is valid.
+     * @param executorService
      */
-    public List<SudokuNumber> checkPuzzleIsValid(ExecutorService executorService){
+    public void checkPuzzleIsValid(ExecutorService executorService){
         ThreadList duplicateNumbers = new ThreadList();
         ThreadList secondDuplicateList = new ThreadList();
 
@@ -192,7 +186,7 @@ public class SudokuBoard {
 
         List<SudokuNumber> totalFaults = duplicateNumbers.getAllSudokuNumbers();
         totalFaults.addAll(secondDuplicateList.getAllSudokuNumbers());
-        return duplicateNumbers.getAllSudokuNumbers();
+        notifyObservers(duplicateNumbers);
     }
 
     private void combineRestThreadLists(ThreadList rowDuplicates, ThreadList columnDuplicates, ThreadList cellDuplicates, ThreadList newDuplicateList){
@@ -221,11 +215,6 @@ public class SudokuBoard {
         }));
     }
 
-    public static void main(String[] args) {
-        SudokuBoard sudokuBoard = new SudokuBoard("4321323434122143");
-        List<SudokuNumber> sudokuNumberList = sudokuBoard.checkPuzzleIsValid(Executors.newFixedThreadPool(3));
-        sudokuNumberList.forEach(sudNum -> System.out.println("X " + sudNum.getColumnID() + " Y " + sudNum.getListID() + " Val " + sudNum.getNumber()));
-    }
     /**
      * Combines all threadlists into one duplicate list.
      * @param rowDuplicates the row duplicates.
@@ -332,5 +321,31 @@ public class SudokuBoard {
        if (object == null){
            throw new IllegalArgumentException("The " + error + " cannot be null.");
        }
+    }
+
+    @Override
+    public void registerObserver(SudokuBoardObserver sudokuBoardObserver) {
+        checkIfObserverIsNull(sudokuBoardObserver);
+        this.sudokuBoardObservers.add(sudokuBoardObserver);
+    }
+
+    @Override
+    public void removeObserver(SudokuBoardObserver sudokuBoardObserver) {
+        checkIfObserverIsNull(sudokuBoardObserver);
+        this.sudokuBoardObservers.remove(sudokuBoardObserver);
+    }
+
+    @Override
+    public void notifyObservers(ThreadList threadList) {
+        checkIfObjectIsNull(threadList, "threadlist");
+        this.sudokuBoardObservers.forEach(observer -> observer.update(threadList.getAllSudokuNumbers()));
+    }
+
+    /**
+     * Checks if the observer is null.
+     * @param sudokuBoardObserver the sudoku-board observer to check.
+     */
+    private void checkIfObserverIsNull(SudokuBoardObserver sudokuBoardObserver){
+        checkIfObjectIsNull(sudokuBoardObserver, "sudoku-board observer");
     }
 }
